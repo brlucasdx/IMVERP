@@ -1,5 +1,5 @@
 [Unit]
-Description=IMV ERP — FastAPI Backend
+Description=HN Imóveis ERP — FastAPI Backend
 After=network.target postgresql.service
 Requires=postgresql.service
 

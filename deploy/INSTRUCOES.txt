@@ -1,97 +1,170 @@
 ================================================
-  IMV ERP — Instruções de Deploy (Ubuntu 22/24)
+  HN Imóveis ERP — Instruções de Deploy
+  Stack: FastAPI + PostgreSQL + Nginx (Ubuntu 22/24)
 ================================================
 
-ESTRUTURA DE ARQUIVOS:
-  IMV/
-  ├── mockup_erp_imobiliario.html   ← o sistema
+ESTRUTURA DO PROJETO:
+  IMVERP/
+  ├── backend/                  ← API FastAPI (Python)
+  │   ├── app/
+  │   │   ├── main.py
+  │   │   ├── models.py
+  │   │   ├── schemas.py
+  │   │   ├── database.py
+  │   │   └── routers/
+  │   ├── requirements.txt
+  │   └── seed.py               ← cria usuário admin inicial
+  ├── mockup_erp_imobiliario.html  ← frontend single-page
   └── deploy/
-      ├── deploy.sh                 ← script de instalação (rode 1 vez)
-      ├── atualizar.sh              ← script para atualizar o HTML
-      └── INSTRUCOES.txt            ← este arquivo
+      ├── deploy_full.sh        ← instalador completo (rode 1 vez)
+      ├── atualizar.sh          ← atualiza HTML em produção
+      ├── imv-erp.service       ← unit file systemd
+      └── INSTRUCOES.txt        ← este arquivo
 
 ------------------------------------------------------------
-PASSO 1 — Copiar os arquivos para o servidor Linux
+PRÉ-REQUISITOS NO SERVIDOR
 ------------------------------------------------------------
 
-  Abra um terminal NO SERVIDOR e execute:
-
-  # Se os arquivos estão num pendrive:
-  cp -r /media/seu-usuario/pendrive/IMV ~/IMV
-
-  # Se quiser transferir de outro PC via rede (rode NO PC ATUAL):
-  scp -r "/home/lucas/Documentos/lusca (2)/Pessoal/IMV" usuario@IP_DO_SERVIDOR:~/
-
-  # Substitua "usuario" pelo seu usuário Linux e IP_DO_SERVIDOR pelo IP da máquina
+  Ubuntu 22.04 ou 24.04 LTS
+  Acesso root (sudo)
+  Porta 80 liberada no firewall/cloud (regra de entrada HTTP)
 
 ------------------------------------------------------------
-PASSO 2 — Executar o script de instalação
+PASSO 1 — Clonar o repositório no servidor
 ------------------------------------------------------------
 
-  No terminal DO SERVIDOR:
+  SSH no servidor e execute:
 
-  cd ~/IMV/deploy
-  sudo bash deploy.sh
+  sudo apt update && sudo apt install -y git
+  git clone https://github.com/brlucasdx/IMVERP.git ~/IMVERP
 
-  O script vai:
-  ✓ Instalar o Nginx (servidor web)
-  ✓ Criar a pasta /var/www/imv-erp/
-  ✓ Copiar o HTML para produção
-  ✓ Configurar o Nginx
-  ✓ Abrir porta 80 no firewall
-  ✓ Habilitar auto-start no boot
-  ✓ Mostrar o IP de acesso
+  Se o servidor não tiver acesso ao GitHub, transfira via SCP
+  do seu PC (substitua IP_DO_SERVIDOR):
+
+  scp -r "/home/lucas/Documentos/lusca (2)/Pessoal/IMV" usuario@IP_DO_SERVIDOR:~/IMVERP
+
+------------------------------------------------------------
+PASSO 2 — Executar o deploy completo
+------------------------------------------------------------
+
+  cd ~/IMVERP/deploy
+  sudo bash deploy_full.sh
+
+  O script faz tudo automaticamente:
+  ✓ Instala: Nginx, PostgreSQL, Python 3, dependências
+  ✓ Cria banco de dados e usuário com senha aleatória
+  ✓ Copia o backend para /opt/imv-erp/
+  ✓ Cria o arquivo .env de produção
+  ✓ Cria o venv e instala pacotes Python
+  ✓ Cria todas as tabelas (SQLAlchemy create_all)
+  ✓ Aplica migrações incrementais (enum entrega_chave, colunas novas)
+  ✓ Roda o seed.py (usuário admin inicial)
+  ✓ Instala e inicia o serviço systemd (imv-erp)
+  ✓ Configura o Nginx como proxy reverso na porta 80
+  ✓ Ativa o firewall (porta 80)
+  ✓ Mostra o IP de acesso ao final
 
 ------------------------------------------------------------
 PASSO 3 — Acessar o sistema
 ------------------------------------------------------------
 
-  Depois do deploy, acesse de qualquer computador na mesma rede:
+  Do navegador de qualquer máquina na mesma rede:
 
   http://IP_DO_SERVIDOR
 
-  Para descobrir o IP do servidor Linux:
+  Login padrão criado pelo seed:
+  Email: admin@hnimóveis.com
+  Senha: admin   ← TROQUE após o primeiro acesso!
+
+  Documentação da API (Swagger):
+  http://IP_DO_SERVIDOR/api/docs
+
+  Para descobrir o IP do servidor:
   hostname -I
 
 ------------------------------------------------------------
-PARA ATUALIZAR O SISTEMA (próximas versões do HTML)
+WORKFLOW — 7 ETAPAS
 ------------------------------------------------------------
 
-  Substitua o arquivo HTML e rode:
+  1. Engenharia      — Laudo do engenheiro
+  2. Aprovação       — Aprovação de crédito / assinatura Caixa
+  3. Documentação    — Certidões e pesquisas
+  4. SIKTD           — Envio digital no sistema Caixa
+  5. Cartório        — Autenticação física (20–30 dias)
+  6. Entrega Chave   — Chave física entregue ao cliente
+  7. Concluído       — Processo encerrado
 
-  cd ~/IMV/deploy
-  sudo bash atualizar.sh
+  Regras de negócio:
+  • Só chega em "Concluído" após a chave ter sido liberada
+  • Só arquiva após estar em "Concluído" E chave liberada
 
-  Pronto — sem reiniciar nada, sem perder configuração.
+------------------------------------------------------------
+PARA ATUALIZAR O SISTEMA (novas versões)
+------------------------------------------------------------
+
+  No servidor:
+
+  cd ~/IMVERP
+  git pull
+  sudo bash deploy/atualizar.sh
+
+  O atualizar.sh apenas copia o HTML. Para atualizar o backend
+  (novos endpoints, modelos, migrações), reinicie o serviço:
+
+  sudo systemctl restart imv-erp
+
+  Para aplicar migrações manualmente em produção:
+  sudo -u postgres psql -d imv_erp
 
 ------------------------------------------------------------
 COMANDOS ÚTEIS NO SERVIDOR
 ------------------------------------------------------------
 
-  Ver status do Nginx:
+  # Status dos serviços
+  sudo systemctl status imv-erp
   sudo systemctl status nginx
+  sudo systemctl status postgresql
 
-  Reiniciar Nginx (se travar):
-  sudo systemctl restart nginx
-
-  Ver log de acessos em tempo real:
+  # Logs em tempo real
+  sudo journalctl -u imv-erp -f
   sudo tail -f /var/log/nginx/imv-erp-access.log
-
-  Ver erros:
   sudo tail -f /var/log/nginx/imv-erp-error.log
 
+  # Reiniciar tudo
+  sudo systemctl restart imv-erp nginx
+
+  # Verificar porta 8000 (FastAPI interno)
+  curl http://127.0.0.1:8000/api/health
+
+  # Banco de dados
+  sudo -u postgres psql -d imv_erp
+
 ------------------------------------------------------------
-OPCIONAL — Acesso por nome em vez de IP
+OPCIONAL — Acesso por nome (DNS local)
 ------------------------------------------------------------
 
-  Em cada PC da rede que vai usar o sistema, edite o arquivo hosts:
+  Em cada PC da rede, edite o arquivo hosts:
 
   Linux/Mac: sudo nano /etc/hosts
   Windows:   C:\Windows\System32\drivers\etc\hosts
 
-  Adicione a linha (substitua pelo IP real):
-  192.168.1.100   imv.local
+  Adicione (substitua pelo IP real do servidor):
+  192.168.1.100   hn.local
 
-  Depois acesse: http://imv.local
+  Depois acesse: http://hn.local
 
+------------------------------------------------------------
+OPCIONAL — HTTPS com Let's Encrypt (domínio público)
+------------------------------------------------------------
+
+  Se o servidor tiver domínio público apontando para o IP:
+
+  sudo apt install -y certbot python3-certbot-nginx
+  sudo certbot --nginx -d seu-dominio.com.br
+
+  Depois o Nginx servirá em HTTPS automaticamente.
+
+================================================
+  HN Imóveis — Sistema de Gestão de Processos
+  https://github.com/brlucasdx/IMVERP
 ================================================

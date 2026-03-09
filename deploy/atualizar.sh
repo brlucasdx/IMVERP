@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#  IMV ERP — Atualizar HTML em produção
+#  HN Imóveis ERP — Atualizar HTML em produção
 #  Uso: sudo bash atualizar.sh
 # ============================================================
 

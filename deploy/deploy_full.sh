@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#  IMV ERP — Deploy COMPLETO em Produção
+#  HN Imóveis ERP — Deploy COMPLETO em Produção
 #  Instala: Nginx + PostgreSQL + FastAPI + systemd
 #  Uso: sudo bash deploy_full.sh
 # ============================================================
@@ -23,7 +23,7 @@ LOCAL_IP=$(hostname -I | awk '{print $1}')
 
 echo ""
 echo -e "${BOLD}================================================${NC}"
-echo -e "${BOLD}   IMV ERP — Deploy Completo em Produção        ${NC}"
+echo -e "${BOLD}   HN Imóveis ERP — Deploy Completo             ${NC}"
 echo -e "${BOLD}================================================${NC}"
 echo ""
 
@@ -87,6 +87,49 @@ from app.database import engine, Base
 import app.models
 Base.metadata.create_all(bind=engine)
 "
+log "Tabelas criadas"
+
+# ── migrações incrementais (seguras p/ novo install e p/ upgrade) ──────────
+info "Aplicando migrações de schema..."
+sudo -u postgres psql -d "${DB_NAME}" << 'SQLEOF'
+-- Enum: adiciona etapa entrega_chave se ainda não existir
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_enum
+    WHERE enumlabel = 'entrega_chave'
+      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'workflowstep')
+  ) THEN
+    ALTER TYPE workflowstep ADD VALUE 'entrega_chave' AFTER 'cartorio';
+  END IF;
+END$$;
+
+-- Coluna telefone no cliente (adicionada em v2)
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS telefone VARCHAR(20);
+
+-- Colunas de arquivamento
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS arquivado BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS arquivado_em TIMESTAMP;
+
+-- Colunas de chave
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS chave_liberada BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS data_chave_liberada DATE;
+
+-- Soft-delete
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
+
+-- Tabela de notas (criada pelo create_all; garante existência)
+CREATE TABLE IF NOT EXISTS notas_clientes (
+  id         SERIAL PRIMARY KEY,
+  cliente_id INTEGER NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
+  usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+  texto      TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+SQLEOF
+log "Migrações aplicadas"
+
+info "Rodando seed de dados iniciais..."
 "$INSTALL_DIR/backend/venv/bin/python" seed.py
 log "Banco inicializado"
 
@@ -165,20 +208,24 @@ log "Firewall configurado"
 # ── resultado ──────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}================================================${NC}"
-echo -e "${GREEN}${BOLD}   DEPLOY COMPLETO COM SUCESSO!${NC}"
+echo -e "${GREEN}${BOLD}   HN Imóveis ERP — DEPLOY CONCLUÍDO!          ${NC}"
 echo -e "${BOLD}================================================${NC}"
 echo ""
 echo -e "  ${BOLD}Sistema:${NC}  ${BLUE}${BOLD}http://${LOCAL_IP}${NC}"
 echo -e "  ${BOLD}API Docs:${NC} ${BLUE}http://${LOCAL_IP}/api/docs${NC}"
 echo ""
 echo -e "  ${BOLD}Banco de dados:${NC}"
-echo -e "  Nome:  ${YELLOW}${DB_NAME}${NC}"
+echo -e "  Nome:    ${YELLOW}${DB_NAME}${NC}"
 echo -e "  Usuário: ${YELLOW}${DB_USER}${NC}"
-echo -e "  Senha salva em: ${YELLOW}${INSTALL_DIR}/backend/.env${NC}"
+echo -e "  Senha:   salva em ${YELLOW}${INSTALL_DIR}/backend/.env${NC}"
+echo ""
+echo -e "  ${BOLD}Login padrão:${NC}"
+echo -e "  Admin:    ${YELLOW}admin@hnimóveis.com${NC}  /  ${YELLOW}admin${NC}"
 echo ""
 echo -e "  ${BOLD}Comandos úteis:${NC}"
 echo -e "  Status API:    ${YELLOW}sudo systemctl status imv-erp${NC}"
 echo -e "  Log API:       ${YELLOW}sudo journalctl -u imv-erp -f${NC}"
 echo -e "  Log Nginx:     ${YELLOW}sudo tail -f /var/log/nginx/imv-erp-access.log${NC}"
 echo -e "  Reiniciar:     ${YELLOW}sudo systemctl restart imv-erp nginx${NC}"
+echo -e "  Atualizar:     ${YELLOW}cd ~/IMVERP && git pull && sudo bash deploy/atualizar.sh${NC}"
 echo ""
