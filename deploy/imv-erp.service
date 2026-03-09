@@ -1,0 +1,21 @@
+[Unit]
+Description=IMV ERP — FastAPI Backend
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/imv-erp/backend
+Environment="PATH=/opt/imv-erp/backend/venv/bin"
+EnvironmentFile=/opt/imv-erp/backend/.env
+ExecStart=/opt/imv-erp/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=imv-erp
+
+[Install]
+WantedBy=multi-user.target

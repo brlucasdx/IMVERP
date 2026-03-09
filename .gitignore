@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.so
+
+# Virtualenv
+backend/venv/
+venv/
+.env/
+
+# Variáveis de ambiente (NUNCA commitar)
+backend/.env
+.env
+
+# Uploads de usuários
+backend/uploads/
+uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Arquivos locais / temporários
+*.xlsx
+*.zip
+backend/uploads/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Alembic (se usado)
+# alembic/versions/*.py  # descomente se não quiser versionar migrations

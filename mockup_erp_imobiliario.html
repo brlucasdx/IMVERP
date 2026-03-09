@@ -1,0 +1,3736 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMV Gestão Imobiliária — ERP</title>
+<style>
+:root {
+  --primary: #1a3a5c;
+  --primary-light: #2563a8;
+  --accent: #f59e0b;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --bg: #f1f5f9;
+  --sidebar-bg: #0f2744;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --sidebar-width: 230px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ---- SIDEBAR ---- */
+.sidebar {
+  width: var(--sidebar-width); background: var(--sidebar-bg);
+  display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+}
+.sidebar-brand { padding: 20px 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.logo-text { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+.logo-text span { color: var(--accent); }
+.logo-sub { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 2px; letter-spacing: 1px; text-transform: uppercase; }
+.sidebar-section { padding: 18px 14px 5px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.28); font-weight: 600; }
+.sidebar-menu { list-style: none; padding: 0 8px; }
+.sidebar-menu li a {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+  border-radius: 8px; text-decoration: none; font-size: 13px;
+  color: rgba(255,255,255,0.6); transition: all 0.15s; cursor: pointer; margin-bottom: 2px;
+}
+.sidebar-menu li a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.sidebar-menu li a.active { background: var(--primary-light); color: #fff; }
+.sidebar-menu li a .icon { font-size: 15px; width: 20px; text-align: center; }
+.sidebar-badge {
+  margin-left: auto; background: var(--danger); color: #fff;
+  font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 20px;
+}
+.sidebar-footer { margin-top: auto; padding: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+.sidebar-user { display: flex; align-items: center; gap: 10px; }
+.sidebar-user .avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light);
+  display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 12px;
+}
+.sidebar-user .info .name { font-size: 12px; color: #fff; font-weight: 600; }
+.sidebar-user .info .role { font-size: 10px; color: rgba(255,255,255,0.4); }
+
+/* ---- MAIN ---- */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 58px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.topbar-title { font-size: 16px; font-weight: 700; color: var(--primary); }
+.topbar-breadcrumb { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-date { font-size: 12px; color: var(--text-muted); }
+.btn-icon {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.15s;
+}
+.btn-icon:hover { background: var(--bg); }
+.notif-dot { position: relative; }
+.notif-dot::after {
+  content: ''; position: absolute; top: 5px; right: 5px;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--danger); border: 1px solid #fff;
+}
+.content { flex: 1; overflow-y: auto; padding: 22px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ---- KPI GRID ---- */
+.kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+.kpi-card {
+  background: var(--card); border-radius: 12px; padding: 18px 18px 14px;
+  border: 1px solid var(--border); position: relative; overflow: hidden;
+}
+.kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 4px; height: 100%; border-radius: 12px 0 0 12px;
+}
+.kpi-card.blue::before   { background: var(--info); }
+.kpi-card.green::before  { background: var(--success); }
+.kpi-card.red::before    { background: var(--danger); }
+.kpi-card.orange::before { background: var(--warning); }
+.kpi-card.gray::before   { background: #94a3b8; }
+.kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 30px; font-weight: 800; color: var(--primary); line-height: 1; }
+.kpi-value span { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+.kpi-meta { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+.kpi-meta .up   { color: var(--success); font-weight: 600; }
+.kpi-meta .down { color: var(--danger);  font-weight: 600; }
+.kpi-icon { position: absolute; top: 14px; right: 14px; font-size: 26px; opacity: 0.12; }
+
+/* ---- DASH GRIDS ---- */
+.dash-row { display: grid; gap: 16px; margin-bottom: 16px; }
+.dash-row.cols-2  { grid-template-columns: 1fr 1fr; }
+.dash-row.cols-32 { grid-template-columns: 3fr 2fr; }
+.dash-row.cols-23 { grid-template-columns: 2fr 3fr; }
+
+/* ---- SECTION CARD ---- */
+.section-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+.section-header {
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-header h3 { font-size: 13px; font-weight: 700; color: var(--primary); }
+
+/* ---- BAR CHART ---- */
+.chart-wrap { padding: 14px 18px; }
+.chart-item { margin-bottom: 12px; }
+.chart-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.chart-label .name { font-weight: 600; color: var(--text); }
+.chart-label .val  { color: var(--text-muted); font-weight: 500; }
+.chart-track { height: 8px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+.chart-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+.chart-fill.blue   { background: linear-gradient(90deg,#2563a8,#60a5fa); }
+.chart-fill.green  { background: linear-gradient(90deg,#059669,#34d399); }
+.chart-fill.orange { background: linear-gradient(90deg,#d97706,#fbbf24); }
+.chart-fill.purple { background: linear-gradient(90deg,#7c3aed,#a78bfa); }
+
+/* ---- RANKING ---- */
+.ranking-list { padding: 6px 0; }
+.ranking-item { display: flex; align-items: center; gap: 10px; padding: 9px 18px; transition: background 0.1s; }
+.ranking-item:hover { background: var(--bg); }
+.rank-pos { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+.rank-pos.gold   { background: #fef3c7; color: #b45309; }
+.rank-pos.silver { background: #f1f5f9; color: #475569; }
+.rank-pos.bronze { background: #fdf4e7; color: #92400e; }
+.rank-pos.other  { background: #f8fafc; color: #94a3b8; }
+.rank-name  { flex: 1; font-size: 13px; font-weight: 600; }
+.rank-count { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 6px; }
+.rank-bar-wrap { width: 70px; height: 5px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+.rank-bar { height: 100%; border-radius: 99px; background: var(--primary-light); }
+
+/* ---- ALERTA CARTÓRIO ---- */
+.alerta-counter { display: flex; align-items: center; gap: 16px; padding: 14px 18px; }
+.alerta-num { font-size: 52px; font-weight: 900; color: var(--warning); line-height: 1; }
+.alerta-desc .label { font-size: 14px; font-weight: 700; color: var(--primary); }
+.alerta-desc .sub   { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.alerta-items { padding: 0 18px 14px; }
+.alerta-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+}
+.alerta-row:last-child { border-bottom: none; }
+.alerta-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.alerta-dot.red    { background: var(--danger); }
+.alerta-dot.orange { background: #f97316; }
+.alerta-dot.blue   { background: var(--info); }
+.alerta-row .cliente { font-weight: 600; flex: 1; }
+.alerta-row .data   { color: var(--text-muted); white-space: nowrap; }
+
+/* ---- CARGA ANALISTA ---- */
+.carga-item { padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.carga-item:last-child { border-bottom: none; }
+.carga-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.carga-name { font-size: 13px; font-weight: 700; }
+.carga-total { font-size: 11px; color: var(--text-muted); }
+.carga-pills { display: flex; gap: 6px; margin-bottom: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+.pill.green  { background: #dcfce7; color: #166534; }
+.pill.yellow { background: #fef9c3; color: #92400e; }
+.pill.red    { background: #fee2e2; color: #991b1b; }
+.pill.blue   { background: #dbeafe; color: #1e40af; }
+.carga-bar { display: flex; height: 6px; border-radius: 99px; overflow: hidden; gap: 1px; }
+.carga-seg.g { background: var(--success); border-radius: 99px; }
+.carga-seg.y { background: var(--warning); border-radius: 99px; }
+.carga-seg.r { background: var(--danger);  border-radius: 99px; }
+
+/* ---- PAGE HEADER ---- */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.page-header h2 { font-size: 18px; font-weight: 800; color: var(--primary); }
+.page-header p  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.page-header .actions { display: flex; gap: 8px; align-items: center; }
+
+/* ---- FILTERS ---- */
+.filter-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.filter-select, .filter-input {
+  padding: 7px 11px; border: 1px solid var(--border); border-radius: 8px;
+  font-size: 12px; background: var(--card); color: var(--text); outline: none; cursor: pointer;
+}
+.filter-select { min-width: 130px; }
+.filter-input  { min-width: 200px; }
+.filter-select:focus, .filter-input:focus { border-color: var(--primary-light); }
+.quick-filters { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.qf-btn {
+  padding: 5px 12px; border-radius: 99px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--card); color: var(--text-muted);
+  cursor: pointer; transition: all 0.15s;
+}
+.qf-btn:hover { border-color: var(--primary-light); color: var(--primary); }
+.qf-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* ---- BUTTONS ---- */
+.btn { padding: 7px 15px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-light); }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-outline:hover { background: var(--bg); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #059669; }
+.btn-sm { padding: 5px 11px; font-size: 11px; }
+.ml-auto { margin-left: auto; }
+.btn-export-construtora {
+  background: linear-gradient(135deg, #1a3a5c, #2563a8);
+  color: #fff; padding: 8px 18px; border-radius: 8px; font-size: 13px;
+  font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 2px 8px rgba(37,99,168,0.3); transition: all 0.15s;
+}
+.btn-export-construtora:hover { box-shadow: 0 4px 16px rgba(37,99,168,0.4); transform: translateY(-1px); }
+
+/* ---- TABLE ---- */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th {
+  background: var(--bg); padding: 9px 12px; text-align: left;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr:hover { background: #f8fafc; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr.row-vencido td:first-child { border-left: 3px solid var(--danger); }
+tbody tr.row-proximo td:first-child { border-left: 3px solid var(--warning); }
+tbody tr.row-ok      td:first-child { border-left: 3px solid var(--success); }
+
+/* ---- TAGS ---- */
+.tag { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 10px; font-weight: 600; }
+.tag.verde    { background: #dcfce7; color: #166534; }
+.tag.vermelho { background: #fee2e2; color: #991b1b; }
+.tag.amarelo  { background: #fef9c3; color: #92400e; }
+.tag.azul     { background: #dbeafe; color: #1e40af; }
+.tag.cinza    { background: #f1f5f9; color: #64748b; }
+.tag.roxo     { background: #ede9fe; color: #5b21b6; }
+
+/* ---- CREDITO PREVISTO BADGE ---- */
+.credito-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46; border: 1px solid #6ee7b7;
+  padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;
+  animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green {
+  0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+  50%      { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+}
+
+/* ---- DOC STATUS ---- */
+.doc-recebido   { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; background: #dcfce7; color: #166534; }
+.doc-aguardando { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; background: #fef9c3; color: #92400e; }
+.doc-pendente   { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; background: #fee2e2; color: #991b1b; }
+
+/* ---- LOGRADOURO HIGHLIGHT ---- */
+.logradouro-highlight { font-size: 11px; color: var(--primary); font-weight: 600; }
+.logradouro-jf { font-size: 11px; color: #1d4ed8; font-weight: 700; background: #eff6ff; padding: 1px 5px; border-radius: 4px; }
+
+/* ---- WORKFLOW ---- */
+.wf { display: flex; font-size: 10px; overflow: hidden; border-radius: 4px; border: 1px solid var(--border); }
+.wf-step {
+  flex: 1; padding: 3px 4px; text-align: center; font-weight: 600;
+  background: var(--bg); color: var(--text-muted); border-right: 1px solid var(--border);
+}
+.wf-step:last-child { border-right: none; }
+.wf-step.done    { background: var(--success); color: #fff; }
+.wf-step.current { background: var(--primary); color: #fff; }
+.wf-step.blocked { background: var(--danger);  color: #fff; }
+
+/* ---- CARD VIEW ---- */
+.view-toggle { display: flex; gap: 4px; }
+.view-btn {
+  width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--card); cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; color: var(--text-muted);
+}
+.view-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.cards-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+.cards-grid.active { display: grid; }
+.client-card {
+  background: var(--card); border-radius: 10px; border: 1px solid var(--border);
+  padding: 14px; position: relative; overflow: hidden;
+}
+.client-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.client-card.c-ok::before      { background: var(--success); }
+.client-card.c-proximo::before { background: var(--warning); }
+.client-card.c-vencido::before { background: var(--danger); }
+.cc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.cc-num  { font-size: 10px; color: var(--text-muted); }
+.cc-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.cc-cpf  { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+.cc-row  { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.cc-info .lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+.cc-info .val { font-size: 12px; font-weight: 600; }
+.cc-rcpm { text-align: right; }
+.cc-rcpm .lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+.cc-rcpm .val { font-size: 13px; font-weight: 700; color: var(--primary); }
+.cc-doc { margin-top: 8px; }
+
+/* ---- TABS ---- */
+.tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 18px; }
+.tab-btn {
+  padding: 9px 16px; font-size: 12px; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; border: none; background: transparent;
+  border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s;
+}
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-btn:hover  { color: var(--primary); }
+
+/* ---- RCPM ---- */
+.rcpm-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 18px; }
+.rcpm-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+.rcpm-card .label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.rcpm-card .value { font-size: 20px; font-weight: 800; color: var(--primary); }
+.rcpm-card .value.danger  { color: var(--danger); }
+.rcpm-card .value.success { color: var(--success); }
+
+/* ---- MODAL ---- */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 1000; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card); border-radius: 14px; padding: 24px;
+  width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.modal-header h3 { font-size: 15px; font-weight: 700; color: var(--primary); }
+.modal-close { cursor: pointer; font-size: 18px; color: var(--text-muted); border: none; background: none; }
+.form-group { margin-bottom: 12px; }
+.form-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; display: block; }
+.form-label.required::after { content: ' *'; color: var(--danger); }
+.form-label.jf-required::after { content: ' * (Obrigatório — Jardim das Flores)'; color: var(--danger); font-size: 9px; }
+.form-input { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: 7px; font-size: 12px; color: var(--text); outline: none; }
+.form-input:focus { border-color: var(--primary-light); }
+.form-input.field-required { border-color: var(--danger); background: #fff5f5; }
+.form-input.field-highlight { border-color: var(--info); border-width: 2px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+
+/* ---- ALERTA CREDITO (in-modal) ---- */
+.alerta-credito {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 1px solid #6ee7b7; border-radius: 10px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+}
+.alerta-credito .icon { font-size: 24px; }
+.alerta-credito .text .title { font-size: 13px; font-weight: 700; color: #065f46; }
+.alerta-credito .text .sub   { font-size: 11px; color: #047857; margin-top: 2px; }
+
+/* ---- UPLOAD FIELD ---- */
+.upload-area {
+  border: 2px dashed var(--border); border-radius: 8px; padding: 14px;
+  text-align: center; cursor: pointer; transition: all 0.15s;
+  background: var(--bg);
+}
+.upload-area:hover { border-color: var(--primary-light); background: #eff6ff; }
+.upload-area .upload-icon { font-size: 24px; margin-bottom: 6px; }
+.upload-area .upload-text { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.upload-area .upload-sub  { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.upload-area input[type="file"] { display: none; }
+.upload-done { background: #f0fdf4; border-color: var(--success); }
+.upload-done .upload-text { color: var(--success); }
+
+/* ---- TOGGLE DOC ---- */
+.toggle-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--bg); border-radius: 8px; }
+.toggle-label { flex: 1; font-size: 12px; font-weight: 600; }
+.toggle { width: 40px; height: 22px; background: #cbd5e1; border-radius: 99px; position: relative; cursor: pointer; transition: background 0.2s; border: none; }
+.toggle.on { background: var(--success); }
+.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: left 0.2s; }
+.toggle.on::after { left: 21px; }
+
+/* ---- EXPORT MODAL ---- */
+.export-block { background: var(--bg); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+.export-block h4 { font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+.export-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.export-row:last-child { border-bottom: none; }
+.export-total { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; padding: 10px 0 0; color: var(--primary); }
+.export-diff  { display: flex; justify-content: space-between; font-size: 12px; color: var(--danger); font-weight: 600; padding-top: 4px; }
+
+/* ---- TOAST ---- */
+.toast {
+  position: fixed; bottom: 22px; right: 22px; background: var(--primary); color: #fff;
+  padding: 12px 18px; border-radius: 10px; font-size: 12px; font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 2000;
+  display: none; gap: 8px; align-items: center; max-width: 320px;
+}
+.toast.show { display: flex; }
+.toast.success { background: var(--success); }
+.toast.warn    { background: var(--warning); color: #1c1c1c; }
+
+
+
+/* ---- WORKFLOW BADGE (novo) ---- */
+.wf-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 7px; font-size: 11px; font-weight: 700;
+  white-space: nowrap;
+}
+.wf-badge .wf-num {
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 800; background: rgba(255,255,255,0.35);
+}
+.wf-badge .wf-dots { display: flex; gap: 2px; margin-left: 4px; }
+.wf-badge .wf-dot  { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.35); }
+.wf-badge .wf-dot.done { background: rgba(255,255,255,0.85); }
+.wf-badge.s0 { background: #e0e7ff; color: #3730a3; }  /* engenharia */
+.wf-badge.s1 { background: #fef3c7; color: #92400e; }  /* aprovacao  */
+.wf-badge.s2 { background: #e0f2fe; color: #075985; }  /* documentacao */
+.wf-badge.s3 { background: #ede9fe; color: #5b21b6; }  /* siktd */
+.wf-badge.s4 { background: #ffedd5; color: #9a3412; }  /* cartorio */
+.wf-badge.s5 { background: #dcfce7; color: #166534; }  /* concluido */
+.wf-badge.s0 .wf-num { background: rgba(55,48,163,0.2); }
+.wf-badge.s1 .wf-num { background: rgba(146,64,14,0.2); }
+.wf-badge.s2 .wf-num { background: rgba(7,89,133,0.2); }
+.wf-badge.s3 .wf-num { background: rgba(91,33,182,0.2); }
+.wf-badge.s4 .wf-num { background: rgba(154,52,18,0.2); }
+.wf-badge.s5 .wf-num { background: rgba(22,101,52,0.2); }
+
+
+/* ---- EMPREENDIMENTO CARD ---- */
+.emp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 14px; }
+.emp-card {
+  background: var(--card); border-radius: 12px; border: 1px solid var(--border);
+  padding: 18px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden;
+}
+.emp-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
+.emp-card.jf::before  { background: linear-gradient(90deg,#3b82f6,#a78bfa); }
+.emp-card.std::before { background: linear-gradient(90deg,#1a3a5c,#2563a8); }
+.emp-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.emp-nome { font-size: 15px; font-weight: 800; color: var(--primary); }
+.emp-const { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.emp-stats { display: flex; gap: 20px; }
+.emp-stat .lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.emp-stat .val { font-size: 20px; font-weight: 800; color: var(--primary); line-height: 1.1; }
+.emp-stat .val small { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+.badge-chave-rapida {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;
+  padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700;
+}
+
+/* ---- CORRETOR CARD ---- */
+.corretor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px; }
+.cor-card {
+  background: var(--card); border-radius: 10px; border: 1px solid var(--border); padding: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.cor-card-top { display: flex; align-items: center; gap: 12px; }
+.cor-avatar {
+  width: 42px; height: 42px; border-radius: 50%; background: var(--primary-light);
+  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; font-weight: 700; flex-shrink: 0;
+}
+.cor-nome { font-size: 14px; font-weight: 700; }
+.cor-creci { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+.cor-info  { display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); }
+.cor-info strong { color: var(--primary); font-size: 14px; }
+.cor-actions { display: flex; gap: 6px; margin-top: 4px; }
+
+/* ---- COMISSOES ---- */
+.comissao-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 14px; margin-bottom: 20px; }
+.comissao-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 18px; position: relative; overflow: hidden; }
+.comissao-card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; border-radius:12px 0 0 12px; }
+.comissao-card.abaixo::before { background: var(--danger); }
+.comissao-card.ok::before     { background: var(--success); }
+.comissao-card.superou::before{ background: var(--info); }
+.comissao-nome { font-size:15px; font-weight:700; margin-bottom:4px; }
+.comissao-sub  { font-size:11px; color:var(--text-muted); margin-bottom:12px; }
+.comissao-val  { font-size:28px; font-weight:900; color:var(--primary); line-height:1; }
+.comissao-val small { font-size:12px; font-weight:500; color:var(--text-muted); }
+.comissao-meta { margin-top:10px; }
+.meta-track    { height:8px; background:var(--bg); border-radius:99px; overflow:hidden; margin-top:4px; }
+.meta-fill     { height:100%; border-radius:99px; transition:width 0.6s ease; }
+.meta-fill.abaixo { background:linear-gradient(90deg,#ef4444,#fca5a5); }
+.meta-fill.ok     { background:linear-gradient(90deg,#10b981,#6ee7b7); }
+.meta-fill.superou{ background:linear-gradient(90deg,#3b82f6,#93c5fd); }
+
+/* ---- ALERTA 25D ---- */
+.badge-25d { display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa; }
+
+/* ---- CHAVES ---- */
+.chaves-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+
+/* ---- STATUS CHAVE ---- */
+.chave-row-apto      { border-left: 3px solid var(--success); }
+.chave-row-aguardando{ border-left: 3px solid var(--warning); }
+.chave-row-liberada  { border-left: 3px solid #94a3b8; opacity: 0.7; }
+.badge-apto      { display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;background:#dcfce7;color:#166534; }
+.badge-aguardando{ display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;background:#fef9c3;color:#92400e; }
+.badge-liberada  { display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;background:#f1f5f9;color:#475569; }
+.chave-summary   { display:flex;gap:20px;padding:16px 18px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap; }
+.chave-summary .cs-item .cs-lbl { font-size:10px;color:var(--text-muted);text-transform:uppercase; }
+.chave-summary .cs-item .cs-val { font-size:22px;font-weight:800;line-height:1.1; }
+
+.chave-row { padding:12px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+.chave-row:last-child { border-bottom:none; }
+.chave-badge-rapida { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dbeafe;color:#1e40af; }
+.chave-badge-normal { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#f1f5f9;color:#475569; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Detalhe do cliente ── */
+.det-section { margin-bottom:22px; }
+.det-section-title {
+  font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;
+  letter-spacing:.08em; margin-bottom:12px; display:flex; align-items:center; gap:6px;
+  padding-bottom:8px; border-bottom:1px solid var(--border);
+}
+.det-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+.det-field { background:var(--bg); border-radius:8px; padding:10px 12px; }
+.det-field-label { font-size:9px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+.det-field-val { font-size:13px; font-weight:700; }
+
+/* ── Premium Workflow Stepper ── */
+.wf-premium { padding:4px 0 8px; }
+.wf-premium-header { display:flex; align-items:center; gap:10px; margin-bottom:22px; }
+.wf-premium-bar { flex:1; height:8px; background:var(--bg); border-radius:99px; overflow:hidden; position:relative; }
+.wf-premium-fill {
+  height:100%; border-radius:99px;
+  background:linear-gradient(90deg,#10b981,#3b82f6);
+  transition:width 1s cubic-bezier(.34,1.2,.64,1);
+}
+.wf-premium-pct { font-size:14px; font-weight:800; color:var(--primary); min-width:48px; text-align:right; }
+.wf-premium-steps { display:flex; position:relative; }
+.wf-premium-step {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  gap:6px; position:relative;
+}
+.wf-premium-step:not(:last-child)::after {
+  content:''; position:absolute; top:24px; left:50%; width:100%; height:3px;
+  background:var(--border); z-index:0; transition:background 0.4s;
+}
+.wf-premium-step.done:not(:last-child)::after { background:var(--success); }
+.wf-premium-step.current:not(:last-child)::after { background:linear-gradient(90deg,var(--success),var(--border)); }
+.wf-premium-circle {
+  width:48px; height:48px; border-radius:50%; z-index:1; position:relative;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; border:3px solid var(--border);
+  background:var(--card); color:var(--text-muted); transition:all 0.3s ease;
+}
+.wf-premium-step.done .wf-premium-circle {
+  background:var(--success); border-color:var(--success); color:#fff;
+  box-shadow:0 4px 14px rgba(16,185,129,.35);
+}
+.wf-premium-step.current .wf-premium-circle {
+  background:var(--primary); border-color:var(--primary); color:#fff;
+  box-shadow:0 0 0 6px rgba(37,99,168,.15), 0 4px 18px rgba(37,99,168,.35);
+  animation:wf-pulse 2s infinite;
+}
+.wf-premium-step.pending .wf-premium-circle { opacity:.45; }
+@keyframes wf-pulse {
+  0%,100% { box-shadow:0 0 0 6px rgba(37,99,168,.15),0 4px 18px rgba(37,99,168,.35); }
+  50%      { box-shadow:0 0 0 12px rgba(37,99,168,.04),0 4px 22px rgba(37,99,168,.15); }
+}
+.wf-premium-label {
+  font-size:10px; font-weight:700; text-align:center;
+  color:var(--text-muted); white-space:nowrap;
+}
+.wf-premium-step.done .wf-premium-label    { color:var(--success); }
+.wf-premium-step.current .wf-premium-label { color:var(--primary); font-size:11px; }
+.wf-premium-date { font-size:9px; text-align:center; min-height:13px; white-space:nowrap; color:var(--text-muted); }
+.wf-premium-step.done .wf-premium-date    { color:#059669; font-weight:600; }
+.wf-premium-step.current .wf-premium-date { color:var(--primary-light); font-weight:600; }
+/* Card da etapa atual */
+.wf-current-card {
+  margin-top:16px; padding:14px 18px;
+  background:linear-gradient(135deg,#eff6ff,#dbeafe);
+  border:1px solid #bfdbfe; border-radius:12px;
+  display:flex; align-items:center; gap:14px;
+}
+.wf-current-card .wci-icon { font-size:28px; flex-shrink:0; }
+.wf-current-card .wci-step { font-size:10px; color:var(--primary-light); font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.wf-current-card .wci-title { font-size:15px; font-weight:800; color:var(--primary); margin-top:1px; }
+.wf-current-card .wci-desc  { font-size:11px; color:#3b82f6; margin-top:3px; }
+
+/* Avatar do cliente no modal */
+.det-avatar {
+  width:46px; height:46px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  color:#fff; font-weight:800; font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* Comissão e chave no detalhe */
+.det-comissao-box {
+  background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #bbf7d0;
+  border-radius:12px; padding:16px 20px; display:flex; align-items:center; gap:18px;
+}
+.det-chave-box {
+  border-radius:12px; padding:16px 20px;
+  display:flex; align-items:center; gap:16px; justify-content:space-between;
+}
+.det-chave-box.apto      { background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #bbf7d0; }
+.det-chave-box.aguardando{ background:linear-gradient(135deg,#fefce8,#fef9c3); border:1px solid #fde047; }
+.det-chave-box.liberada  { background:#f8fafc; border:1px solid #e2e8f0; opacity:.8; }
+
+/* ── Workflow Picker (formulário) ── */
+.wf-picker { display:flex; position:relative; padding:10px 0 4px; }
+.wf-picker-step {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  gap:5px; cursor:pointer; position:relative;
+}
+.wf-picker-step:not(:last-child)::after {
+  content:''; position:absolute; top:20px; left:50%; width:100%; height:3px;
+  background:var(--border); z-index:0; transition:background 0.25s;
+}
+.wf-picker-step.done:not(:last-child)::after    { background:var(--success); }
+.wf-picker-step.current:not(:last-child)::after { background:linear-gradient(90deg,var(--success),var(--border)); }
+.wf-picker-circle {
+  width:40px; height:40px; border-radius:50%; z-index:1; position:relative;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; border:2px solid var(--border);
+  background:var(--card); color:var(--text-muted);
+  transition:all 0.2s; user-select:none;
+}
+.wf-picker-step:hover .wf-picker-circle {
+  border-color:var(--primary-light); color:var(--primary);
+  transform:scale(1.08); box-shadow:0 2px 10px rgba(37,99,168,.2);
+}
+.wf-picker-step.done .wf-picker-circle {
+  background:var(--success); border-color:var(--success); color:#fff;
+  box-shadow:0 3px 10px rgba(16,185,129,.3);
+}
+.wf-picker-step.current .wf-picker-circle {
+  background:var(--primary); border-color:var(--primary); color:#fff;
+  box-shadow:0 3px 14px rgba(37,99,168,.4);
+}
+.wf-picker-label {
+  font-size:9px; font-weight:700; text-align:center;
+  color:var(--text-muted); white-space:nowrap;
+}
+.wf-picker-step.done .wf-picker-label    { color:var(--success); }
+.wf-picker-step.current .wf-picker-label { color:var(--primary); }
+/* Badge descritivo abaixo do picker */
+.wf-picker-info {
+  margin-top:8px; padding:8px 14px; border-radius:8px;
+  background:linear-gradient(135deg,#eff6ff,#dbeafe);
+  border:1px solid #bfdbfe; font-size:11px; color:var(--primary);
+  font-weight:600; display:flex; align-items:center; gap:8px;
+}
+
+/* ---- UNIDADE CARD ---- */
+.unidade-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.unidade-card {
+  background:var(--card); border-radius:12px; border:1px solid var(--border);
+  padding:20px; position:relative; overflow:hidden;
+}
+.unidade-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#1a3a5c,#2563a8); }
+.unidade-nome { font-size:16px; font-weight:800; color:var(--primary); }
+.unidade-cidade { font-size:12px; color:var(--text-muted); margin-top:2px; }
+.unidade-stats { display:flex; gap:24px; margin:14px 0; }
+.unidade-stat .lbl { font-size:10px; color:var(--text-muted); text-transform:uppercase; }
+.unidade-stat .val { font-size:22px; font-weight:800; color:var(--primary); line-height:1.1; }
+
+/* ===== CONFIGURAÇÕES — USER MANAGEMENT ===== */
+.cfg-user-card {
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:20px 22px; display:flex; align-items:center; gap:16px;
+  transition:box-shadow .15s;
+}
+.cfg-user-card:hover { box-shadow:0 4px 18px rgba(0,0,0,.07); }
+.cfg-avatar-lg {
+  width:48px; height:48px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:16px; color:#fff; letter-spacing:-.5px;
+}
+.cfg-avatar-admin   { background:linear-gradient(135deg,#6366f1,#818cf8); }
+.cfg-avatar-operador{ background:linear-gradient(135deg,#0ea5e9,#38bdf8); }
+.cfg-user-info { flex:1; min-width:0; }
+.cfg-user-nome { font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cfg-user-email{ font-size:12px; color:var(--text-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cfg-user-meta { font-size:11px; color:var(--text-muted); margin-top:6px; }
+.cfg-role-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.cfg-role-admin    { background:rgba(99,102,241,.12); color:#6366f1; }
+.cfg-role-operador { background:rgba(14,165,233,.12);  color:#0ea5e9; }
+.cfg-self-badge {
+  display:inline-flex; align-items:center;
+  padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700;
+  background:rgba(16,185,129,.12); color:#10b981; margin-left:6px;
+}
+.cfg-actions { display:flex; gap:6px; flex-shrink:0; }
+.pw-strength { height:4px; border-radius:99px; margin-top:6px; transition:width .3s,background .3s; }
+
+/* ===== LOGIN OVERLAY ===== */
+.login-overlay {
+  position:fixed; inset:0; z-index:9999;
+  background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 55%,#0f172a 100%);
+  display:flex; align-items:center; justify-content:center;
+}
+.login-card {
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px; padding:48px 40px;
+  width:100%; max-width:400px;
+  box-shadow:0 32px 80px rgba(0,0,0,0.55);
+  animation:loginIn 0.35s cubic-bezier(.34,1.4,.64,1) both;
+}
+@keyframes loginIn { from { opacity:0; transform:scale(.94) translateY(16px); } }
+.login-logo { font-size:30px; font-weight:900; color:#fff; letter-spacing:-1px; text-align:center; margin-bottom:4px; }
+.login-logo span { color:#818cf8; }
+.login-subtitle { text-align:center; color:rgba(255,255,255,0.35); font-size:11px; text-transform:uppercase; letter-spacing:2px; margin-bottom:36px; }
+.login-field { margin-bottom:16px; }
+.login-field label { display:block; font-size:11px; font-weight:700; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:1px; margin-bottom:7px; }
+.login-field input {
+  width:100%; background:rgba(255,255,255,0.08);
+  border:1.5px solid rgba(255,255,255,0.12); border-radius:10px;
+  padding:12px 14px; color:#fff; font-size:14px; outline:none;
+  transition:border-color .2s,background .2s; box-sizing:border-box;
+}
+.login-field input:focus { border-color:#818cf8; background:rgba(255,255,255,0.13); }
+.login-field input::placeholder { color:rgba(255,255,255,0.22); }
+.login-error {
+  background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3);
+  border-radius:8px; color:#fca5a5; font-size:13px; padding:10px 14px; margin-bottom:14px;
+}
+.login-btn {
+  width:100%; padding:13px; font-size:14px; font-weight:700; border-radius:10px;
+  background:linear-gradient(135deg,#6366f1,#818cf8); border:none; color:#fff;
+  cursor:pointer; transition:opacity .2s,transform .1s; letter-spacing:0.3px;
+}
+.login-btn:hover:not(:disabled) { opacity:.9; }
+.login-btn:active:not(:disabled) { transform:scale(.98); }
+.login-btn:disabled { opacity:.5; cursor:not-allowed; }
+.login-version { text-align:center; color:rgba(255,255,255,0.18); font-size:11px; margin-top:22px; }
+
+/* ===== ROLE-BASED VISIBILITY ===== */
+/* Admin-only nav items/sections ficam ocultos por padrão;
+   visíveis somente quando <body> tem a classe .is-admin */
+[data-role="admin"] { display:none !important; }
+body.is-admin [data-role="admin"] { display:block !important; }
+body.is-admin li[data-role="admin"] { display:list-item !important; }
+/* botão logout */
+.sidebar-logout {
+  width:100%; margin-top:8px; background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.11); border-radius:8px;
+  color:rgba(255,255,255,0.55); padding:7px; font-size:12px;
+  cursor:pointer; transition:background .2s,color .2s;
+}
+.sidebar-logout:hover { background:rgba(239,68,68,0.2); color:#fca5a5; }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN OVERLAY ===== -->
+<div id="login-overlay" class="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">IMV<span>.</span>ERP</div>
+    <div class="login-subtitle">Gestão Imobiliária</div>
+    <form id="login-form" onsubmit="doLogin(event)">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label>Senha</label>
+        <input type="password" id="login-senha" placeholder="••••••" autocomplete="current-password" required>
+      </div>
+      <div id="login-error" class="login-error" style="display:none"></div>
+      <button type="submit" class="login-btn" id="login-btn">Entrar</button>
+    </form>
+    <div class="login-version">v1.0.0 · IMV Soluções Imobiliárias</div>
+  </div>
+</div>
+
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-text">IMV<span>.</span>ERP</div>
+    <div class="logo-sub">Gestão Imobiliária</div>
+  </div>
+  <div class="sidebar-section">Principal</div>
+  <ul class="sidebar-menu">
+    <li><a class="active" onclick="nav('dashboard')"><span class="icon">🏠</span> Dashboard</a></li>
+  </ul>
+  <div class="sidebar-section">Operações</div>
+  <ul class="sidebar-menu">
+    <li><a onclick="nav('clientes')"><span class="icon">🔀</span> Pipeline</a></li>
+    <li><a onclick="nav('empreendimentos')"><span class="icon">🏘️</span> Empreendimentos</a></li>
+    <li><a onclick="nav('corretores')"><span class="icon">👤</span> Config. Corretores</a></li>
+    <li data-role="admin"><a onclick="nav('unidades')"><span class="icon">🏙️</span> Unidades / Cidades</a></li>
+  </ul>
+  <div class="sidebar-section" data-role="admin">Financeiro</div>
+  <ul class="sidebar-menu" data-role="admin">
+    <li><a onclick="nav('rcpm')"><span class="icon">🛡️</span> Relatórios p/ Construtores <span class="sidebar-badge">3</span></a></li>
+    <li><a onclick="nav('comissoes')"><span class="icon">💰</span> Comissões</a></li>
+    <li><a onclick="nav('chaves')"><span class="icon">🔑</span> Liberar Chaves</a></li>
+  </ul>
+  <div class="sidebar-section" data-role="admin">Sistema</div>
+  <ul class="sidebar-menu" data-role="admin">
+    <li><a onclick="nav('relatorios')"><span class="icon">📊</span> Relatórios</a></li>
+    <li><a onclick="nav('lixeira')"><span class="icon">🗑️</span> Lixeira <span class="sidebar-badge" id="lixeira-badge" style="display:none"></span></a></li>
+    <li><a onclick="nav('configuracoes')"><span class="icon">⚙️</span> Configurações</a></li>
+  </ul>
+  <div class="sidebar-footer">
+    <div class="sidebar-user" style="cursor:default">
+      <div class="avatar" id="sidebar-user-avatar">?</div>
+      <div class="info">
+        <div class="name" id="sidebar-user-name">–</div>
+        <div class="role" id="sidebar-user-role">–</div>
+      </div>
+    </div>
+    <button class="sidebar-logout" onclick="doLogout()">🚪 Sair</button>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="pg-title">Dashboard</div>
+      <div class="topbar-breadcrumb" id="pg-sub">Painel de Comando — Visão Geral</div>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date">06 Mar 2026</span>
+      <button class="btn-icon notif-dot" onclick="showToast('4 documentos de cartório aguardando esta semana!','warn')">🔔</button>
+      <button class="btn-icon" onclick="showToast('Exportação iniciada...','ok')">⬇️</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- =====================================================
+         DASHBOARD
+    ====================================================== -->
+    <div class="page active" id="page-dashboard">
+
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-icon">🏠</div>
+          <div class="kpi-label">Radar de Vendas</div>
+          <div class="kpi-value">542 <span>casas</span></div>
+          <div class="kpi-meta"><span class="up">↑ 18</span> este mês · Meta: 600</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon">🏆</div>
+          <div class="kpi-label">Top Performance</div>
+          <div class="kpi-value">Leudo</div>
+          <div class="kpi-meta">98 vendas · <span class="up">+14%</span> vs. mês ant.</div>
+        </div>
+        <!-- KPI 3: Docs Cartório Aguardados (novo) -->
+        <div class="kpi-card orange">
+          <div class="kpi-icon">📂</div>
+          <div class="kpi-label">Docs Cartório — Esta Semana</div>
+          <div class="kpi-value">4 <span>aguardados</span></div>
+          <div class="kpi-meta"><span class="up">2 recebidos</span> · <span class="down">2 pendentes</span></div>
+        </div>
+        <div class="kpi-card gray">
+          <div class="kpi-icon">📌</div>
+          <div class="kpi-label">Carga de Trabalho</div>
+          <div class="kpi-value">27 <span>pendentes</span></div>
+          <div class="kpi-meta"><span class="down">8 em atraso</span></div>
+        </div>
+      </div>
+
+      <!-- Radar vendas + Ranking -->
+      <div class="dash-row cols-32">
+        <div class="section-card">
+          <div class="section-header">
+            <h3>📊 Radar de Vendas por Empreendimento</h3>
+            <button class="btn btn-outline btn-sm" onclick="nav('empreendimentos')">Detalhes</button>
+          </div>
+          <div class="chart-wrap" id="chart-empreend"></div>
+        </div>
+        <div class="section-card">
+          <div class="section-header">
+            <h3>🏆 Top Performance — Corretores</h3>
+            <button class="btn btn-outline btn-sm" onclick="nav('corretores')">Ver Todos</button>
+          </div>
+          <div class="ranking-list" id="ranking-dash"></div>
+        </div>
+      </div>
+
+      <!-- Docs Cartório + Carga Analistas -->
+      <div class="dash-row cols-23">
+        <!-- Alerta Cartório (novo) -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>📂 Documentos de Cartório — Esta Semana</h3>
+            <button class="btn btn-outline btn-sm" onclick="nav('clientes')">Ver Registros</button>
+          </div>
+          <div class="alerta-counter">
+            <div class="alerta-num">4</div>
+            <div class="alerta-desc">
+              <div class="label">Chegadas de Garantia esperadas</div>
+              <div class="sub">2 recebidos · 2 ainda aguardando</div>
+            </div>
+          </div>
+          <div class="alerta-items">
+            <div class="alerta-row">
+              <div class="alerta-dot blue"></div>
+              <div class="cliente">Paulo Ferreira</div>
+              <div><span class="doc-recebido">✓ Recebido — Crédito: Amanhã</span></div>
+            </div>
+            <div class="alerta-row">
+              <div class="alerta-dot blue"></div>
+              <div class="cliente">Marcia Oliveira</div>
+              <div><span class="doc-recebido">✓ Recebido — Crédito: Amanhã</span></div>
+            </div>
+            <div class="alerta-row">
+              <div class="alerta-dot orange"></div>
+              <div class="cliente">Tiago Barbosa</div>
+              <div><span class="doc-aguardando">⏳ Aguardando doc.</span></div>
+            </div>
+            <div class="alerta-row">
+              <div class="alerta-dot red"></div>
+              <div class="cliente">Juliana Castro</div>
+              <div><span class="doc-pendente">⚠ Atrasado</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Carga Analistas -->
+        <div class="section-card">
+          <div class="section-header"><h3>👩‍💼 Carga de Trabalho — Analistas</h3></div>
+          <div id="carga-analistas"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         BANCO DE DADOS GERAL
+    ====================================================== -->
+    <div class="page" id="page-clientes">
+      <div class="page-header">
+        <div>
+          <h2>Pipeline</h2>
+          <p>Base unificada — todos os empreendimentos</p>
+        </div>
+        <div class="actions">
+          <div class="view-toggle">
+            <button class="view-btn active" id="btn-table-view" onclick="setView('table')" title="Tabela">☰</button>
+            <button class="view-btn" id="btn-card-view" onclick="setView('cards')" title="Cards">⊞</button>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="showToast('Exportado para Excel!','ok')">📥 Exportar</button>
+          <button class="btn btn-primary" onclick="openModal('modal-new')">+ Novo Registro</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <input class="filter-input" placeholder="🔍  Buscar nome, CPF, casa, rua... (pesquisa global)" id="srch" oninput="filterTable()">
+        <select class="filter-select" id="flt-analista" onchange="filterTable()">
+          <option value="">Todos os Analistas</option>
+        </select>
+        <select class="filter-select" id="flt-status" onchange="filterTable()">
+          <option value="">Todos os Status</option>
+          <option value="ok">Doc Recebido</option>
+          <option value="proximo">Aguardando Doc</option>
+          <option value="vencido">Atrasado</option>
+        </select>
+        <select class="filter-select" id="flt-unidade" onchange="filterTable()">
+          <option value="">Todas as Unidades</option>
+        </select>
+      </div>
+
+      <!-- Filtros rápidos por bairro — carregados via API -->
+      <div class="quick-filters" id="quick-filters">
+        <button class="qf-btn active" onclick="qfFilter(this,'')">Todos</button>
+      </div>
+
+      <!-- TABLE VIEW -->
+      <div class="section-card" id="view-table">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nº</th>
+                <th>Cliente</th>
+                <th>Empreendimento</th>
+                <th>Casa / Loc.</th>
+                <th>Corretor</th>
+                <th>Analista</th>
+                <th>📂 Chegada Cartório</th>
+                <th>Doc.</th>
+                <th>Crédito</th>
+                <th>RCPM</th>
+                <th>Workflow</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-clientes"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CARD VIEW -->
+      <div class="cards-grid" id="view-cards"></div>
+    </div>
+
+    <!-- =====================================================
+         EMPREENDIMENTOS
+    ====================================================== -->
+    <div class="page" id="page-empreendimentos">
+      <div class="page-header">
+        <div><h2>Empreendimentos</h2><p>Cadastro e gestão de loteamentos</p></div>
+        <div class="actions">
+          <select class="filter-select" id="flt-emp-unidade" onchange="loadEmpreendimentos()">
+            <option value="">Todas as Unidades</option>
+          </select>
+          <button class="btn btn-primary" onclick="abrirModalEmp()">+ Novo Empreendimento</button>
+        </div>
+      </div>
+      <div class="emp-grid" id="emp-grid"></div>
+    </div>
+
+    <!-- =====================================================
+         CORRETORES
+    ====================================================== -->
+    <div class="page" id="page-corretores">
+      <div class="page-header">
+        <div><h2>Configuração de Corretores</h2><p>Ranking, cadastro e gestão</p></div>
+        <button class="btn btn-primary" onclick="abrirModalCorretor()">+ Novo Corretor</button>
+      </div>
+      <div class="corretor-grid" id="corretor-grid"></div>
+    </div>
+
+    <!-- =====================================================
+         RELATÓRIOS P/ CONSTRUTORES
+    ====================================================== -->
+    <div class="page" id="page-rcpm">
+      <div class="page-header">
+        <div><h2>Relatórios para Construtores</h2><p>Conciliação RCPM e controle de garantias</p></div>
+        <button class="btn-export-construtora" onclick="openModal('modal-export')">
+          📄 Gerar Extrato Construtora
+        </button>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="tab(this,'t-conciliacao')">Conciliação por Construtora</button>
+        <button class="tab-btn" onclick="tab(this,'t-cartorio')">Chegadas de Cartório</button>
+      </div>
+
+      <div id="t-conciliacao">
+        <div class="rcpm-summary">
+          <div class="rcpm-card"><div class="label">Total Pago no Cartão</div><div class="value">R$ 84.320,00</div></div>
+          <div class="rcpm-card"><div class="label">Total por Construtoras</div><div class="value">R$ 81.750,00</div></div>
+          <div class="rcpm-card"><div class="label">Diferença Pendente</div><div class="value danger">R$ 2.570,00</div></div>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><h3>Detalhamento por Construtora</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Construtora</th><th>Empreendimento</th><th>Apólices</th><th>Pago no Cartão</th><th>Cobrado</th><th>Diferença</th><th>Status</th><th>Ação</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Construtora Alpha</strong></td><td>Vila Imperador</td><td>48</td><td>R$ 38.400,00</td><td>R$ 37.200,00</td><td style="color:var(--danger);font-weight:600">R$ 1.200,00</td><td><span class="tag amarelo">Divergente</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('modal-export')">Extrato</button></td></tr>
+                <tr><td><strong>Construtora Beta</strong></td><td>Jardim das Flores</td><td>32</td><td>R$ 24.960,00</td><td>R$ 24.960,00</td><td style="color:var(--success);font-weight:600">R$ 0,00</td><td><span class="tag verde">Conciliado</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('modal-export')">Extrato</button></td></tr>
+                <tr><td><strong>Construtora Gama</strong></td><td>Parque Palmeiras</td><td>12</td><td>R$ 8.960,00</td><td>R$ 7.590,00</td><td style="color:var(--danger);font-weight:600">R$ 1.370,00</td><td><span class="tag vermelho">Divergente</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('modal-export')">Extrato</button></td></tr>
+                <tr><td><strong>Construtora Delta</strong></td><td>Japim</td><td>19</td><td>R$ 12.000,00</td><td>R$ 12.000,00</td><td style="color:var(--success);font-weight:600">R$ 0,00</td><td><span class="tag verde">Conciliado</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('modal-export')">Extrato</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="t-cartorio" style="display:none">
+        <div class="section-card">
+          <div class="section-header"><h3>📂 Chegadas de Garantia do Cartório</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Nº</th><th>Cliente</th><th>Empreendimento</th><th>Casa</th><th>Chegada Cartório (Prevista)</th><th>Doc. Recebido?</th><th>Crédito Previsto</th><th>PDF</th></tr></thead>
+              <tbody>
+                <tr class="row-ok"><td>005</td><td>Paulo Ferreira</td><td>Vila Imperador</td><td>44</td><td>05/03/2026</td><td><span class="doc-recebido">✓ Recebido</span></td><td><span class="credito-badge">💰 Amanhã — 07/03</span></td><td><span class="tag verde">PDF ✓</span></td></tr>
+                <tr class="row-ok"><td>006</td><td>Marcia Oliveira</td><td>Jardim das Flores</td><td>62</td><td>05/03/2026</td><td><span class="doc-recebido">✓ Recebido</span></td><td><span class="credito-badge">💰 Amanhã — 07/03</span></td><td><span class="tag verde">PDF ✓</span></td></tr>
+                <tr class="row-proximo"><td>007</td><td>Tiago Barbosa</td><td>Vila Imperador</td><td>91</td><td>07/03/2026</td><td><span class="doc-aguardando">⏳ Aguardando</span></td><td><span class="tag cinza">— Aguarda doc.</span></td><td><span class="tag cinza">Sem PDF</span></td></tr>
+                <tr class="row-vencido"><td>008</td><td>Juliana Castro</td><td>Japim</td><td>14</td><td>03/03/2026</td><td><span class="doc-pendente">⚠ Atrasado</span></td><td><span class="tag vermelho">Em atraso</span></td><td><span class="tag cinza">Sem PDF</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         RELATÓRIOS
+    ====================================================== -->
+    <div class="page" id="page-relatorios">
+      <div class="page-header">
+        <div><h2>Relatórios</h2><p>Exportação e análise de dados</p></div>
+      </div>
+      <div class="dash-row cols-2">
+        <div class="section-card" style="padding:20px">
+          <h3 style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--primary)">📊 Relatório de Vendas</h3>
+          <div class="form-group"><label class="form-label">Período</label><select class="filter-select" style="width:100%"><option>Último mês</option><option>Último trimestre</option><option>Ano atual</option></select></div>
+          <div class="form-group"><label class="form-label">Empreendimento</label><select class="filter-select" style="width:100%"><option>Todos</option><option>Jardim das Flores</option><option>Vila Imperador</option><option>Japim</option></select></div>
+          <div class="form-group"><label class="form-label">Corretor</label><select class="filter-select" style="width:100%"><option>Todos</option><option>Leudo</option><option>Andrey</option><option>Emerson</option></select></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="showToast('Relatório de Vendas exportado!','ok')">Gerar Relatório</button>
+        </div>
+        <div class="section-card" style="padding:20px">
+          <h3 style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--primary)">🛡️ Conciliação RCPM</h3>
+          <div class="form-group"><label class="form-label">Construtora</label><select class="filter-select" style="width:100%"><option>Todas</option><option>Alpha</option><option>Beta</option><option>Gama</option><option>Delta</option></select></div>
+          <div class="form-group"><label class="form-label">Período</label><select class="filter-select" style="width:100%"><option>Próximos 30 dias</option><option>Próximos 60 dias</option><option>Atrasados</option><option>Todos</option></select></div>
+          <div class="form-group"><label class="form-label">Formato</label><select class="filter-select" style="width:100%"><option>Excel (.xlsx)</option><option>PDF</option><option>CSV</option></select></div>
+          <button class="btn btn-success" style="width:100%;margin-top:6px" onclick="showToast('Conciliação RCPM exportada!','ok')">Gerar Conciliação</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- =====================================================
+         COMISSOES
+    ====================================================== -->
+    <div class="page" id="page-comissoes">
+      <div class="page-header">
+        <div><h2>💰 Comissões</h2><p>Auto-calculado por assinaturas + lançamentos manuais</p></div>
+        <div class="actions">
+          <select class="filter-select" id="sel-mes-comissao" onchange="loadComissoes()"></select>
+          <button class="btn btn-primary" onclick="abrirModalLancamento()">+ Lançamento Manual</button>
+        </div>
+      </div>
+      <!-- Cards auto-calculados -->
+      <div class="comissao-grid" id="comissao-grid"></div>
+      <!-- Resumo total -->
+      <div class="section-card" style="padding:18px;margin-bottom:16px" id="comissao-resumo"></div>
+      <!-- Lançamentos manuais -->
+      <div class="section-card" id="lancamentos-section">
+        <div class="section-header">
+          <h3>📋 Lançamentos Manuais</h3>
+          <span style="font-size:12px;color:var(--text-muted)">Bônus, ajustes e extras</span>
+        </div>
+        <div id="lancamentos-lista" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         LIBERAR CHAVES
+    ====================================================== -->
+    <div class="page" id="page-chaves">
+      <div class="page-header">
+        <div><h2>Liberar Chaves</h2><p>Controle de entrega de chaves por cliente</p></div>
+        <div class="actions">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;cursor:pointer">
+            <input type="checkbox" id="chk-apenas-pendentes" onchange="loadChaves()" style="width:15px;height:15px">
+            Ocultar liberadas
+          </label>
+          <button class="btn btn-success" onclick="gerarTextoChaves()">📱 Copiar WhatsApp</button>
+        </div>
+      </div>
+      <div class="section-card" id="chaves-card">
+        <div class="chave-summary" id="chave-summary">
+          <div class="cs-item"><div class="cs-lbl">Aptos</div><div class="cs-val" id="cs-apto" style="color:var(--success)">—</div></div>
+          <div class="cs-item"><div class="cs-lbl">Aguardando Cartório</div><div class="cs-val" id="cs-aguardando" style="color:var(--warning)">—</div></div>
+          <div class="cs-item"><div class="cs-lbl">Chaves Liberadas</div><div class="cs-val" id="cs-liberada" style="color:var(--text-muted)">—</div></div>
+        </div>
+        <div id="chaves-lista"></div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         UNIDADES
+    ====================================================== -->
+    <div class="page" id="page-unidades">
+      <div class="page-header">
+        <div><h2>Unidades & Cidades</h2><p>Filiais por cidade — gerencie e filtre por unidade</p></div>
+        <button class="btn btn-primary" onclick="abrirModalUnidade()">+ Nova Unidade</button>
+      </div>
+      <div class="unidade-grid" id="unidade-grid"></div>
+    </div>
+
+    <!-- ====== LIXEIRA ====== -->
+    <div class="page" id="page-lixeira">
+      <div class="page-header">
+        <div>
+          <h2>🗑️ Lixeira</h2>
+          <p>Clientes removidos — somente ADM MASTER pode restaurar</p>
+        </div>
+      </div>
+      <div class="section-card">
+        <div id="lixeira-lista" style="display:flex;flex-direction:column;gap:12px">
+          <div style="padding:24px;text-align:center;color:var(--text-muted)">Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: CONFIGURAÇÕES ===== -->
+    <div class="page" id="page-configuracoes">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h2>Configurações</h2>
+          <p>Gestão de usuários e acessos do sistema</p>
+        </div>
+        <button class="btn btn-primary" onclick="abrirModalUsuario()">+ Novo Usuário</button>
+      </div>
+
+      <!-- Seção usuários -->
+      <div class="section-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+          <span style="font-size:16px">👥</span>
+          <span style="font-weight:700;font-size:14px">Usuários do Sistema</span>
+          <span id="cfg-usuarios-count" style="background:var(--primary-light);color:#fff;border-radius:99px;padding:1px 9px;font-size:11px;font-weight:700"></span>
+        </div>
+        <div id="cfg-usuarios-lista" style="display:flex;flex-direction:column;gap:10px">
+          <div style="padding:24px;text-align:center;color:var(--text-muted)">Carregando...</div>
+        </div>
+      </div>
+
+      <!-- Info de segurança -->
+      <div style="margin-top:16px;padding:14px 16px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15);border-radius:10px;font-size:12px;color:var(--text-muted);display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:16px;flex-shrink:0">🔒</span>
+        <div>
+          <strong style="color:var(--text)">Boas práticas de segurança:</strong>
+          Senhas são armazenadas com bcrypt (hash rounds=12). Tokens JWT expiram em 8 horas.
+          Administradores não podem remover ou rebaixar suas próprias contas. Troque as senhas padrão antes de ir a produção.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ===================================================================
+     MODAL: CRIAR / EDITAR USUÁRIO
+=================================================================== -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h3 id="modal-usuario-titulo">Novo Usuário</h3>
+      <button class="modal-close" onclick="closeModal('modal-usuario')">✕</button>
+    </div>
+    <div style="padding:0 24px 24px">
+      <div class="form-group">
+        <label class="form-label required">Nome completo</label>
+        <input class="form-input" id="uf-nome" placeholder="Ex: João Silva">
+      </div>
+      <div class="form-group">
+        <label class="form-label required">Email</label>
+        <input class="form-input" id="uf-email" type="email" placeholder="joao@imv.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label required">Nível de acesso</label>
+        <select class="form-input" id="uf-tipo">
+          <option value="operador">Operador — acesso operacional</option>
+          <option value="admin">Administrador — acesso total</option>
+        </select>
+        <div id="uf-tipo-aviso" style="display:none;margin-top:6px;font-size:11px;color:#f59e0b;background:rgba(245,158,11,.1);padding:6px 10px;border-radius:6px">
+          ⚠️ Administradores têm acesso total ao sistema, incluindo dados financeiros e gestão de usuários.
+        </div>
+      </div>
+      <!-- Senha — apenas na criação -->
+      <div id="uf-senha-section">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label required">Senha</label>
+            <input class="form-input" id="uf-senha" type="password" placeholder="mínimo 6 caracteres" oninput="_checkPwStrength()">
+            <div id="pw-strength-bar" class="pw-strength" style="width:0;background:#e5e7eb"></div>
+            <div id="pw-strength-label" style="font-size:10px;color:var(--text-muted);margin-top:3px"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Confirmar senha</label>
+            <input class="form-input" id="uf-senha-conf" type="password" placeholder="repita a senha">
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal('modal-usuario')">Cancelar</button>
+        <button class="btn btn-primary" style="flex:2" onclick="salvarUsuario()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: REDEFINIR SENHA
+=================================================================== -->
+<div class="modal-overlay" id="modal-reset-senha">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <h3>Redefinir Senha</h3>
+      <button class="modal-close" onclick="closeModal('modal-reset-senha')">✕</button>
+    </div>
+    <div style="padding:0 24px 24px">
+      <div style="padding:12px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:var(--text-muted);margin-bottom:18px">
+        🔑 Redefinindo senha de: <strong id="reset-user-nome" style="color:var(--text)"></strong>
+      </div>
+      <div class="form-group">
+        <label class="form-label required">Nova senha</label>
+        <input class="form-input" id="rf-senha" type="password" placeholder="mínimo 6 caracteres" oninput="_checkResetStrength()">
+        <div id="rf-strength-bar" class="pw-strength" style="width:0;background:#e5e7eb"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label required">Confirmar nova senha</label>
+        <input class="form-input" id="rf-senha-conf" type="password" placeholder="repita a senha">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal('modal-reset-senha')">Cancelar</button>
+        <button class="btn btn-primary" style="flex:2" onclick="confirmarResetSenha()">Redefinir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: NOVO REGISTRO
+=================================================================== -->
+<div class="modal-overlay" id="modal-new">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Novo Registro</h3>
+      <button class="modal-close" onclick="closeModal('modal-new')">✕</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label class="form-label required">Nº de Ordem</label><input class="form-input" id="f-num-ordem" placeholder="011"></div>
+      <div class="form-group"><label class="form-label required">Casa (Nº)</label><input class="form-input" id="f-casa" placeholder="12"></div>
+    </div>
+
+    <div class="form-group"><label class="form-label required">Nome do Cliente</label><input class="form-input" id="f-nome" placeholder="Nome completo"></div>
+
+    <div class="form-row">
+      <div class="form-group"><label class="form-label required">CPF</label><input class="form-input" id="f-cpf" placeholder="000.000.000-00"></div>
+      <div class="form-group">
+        <label class="form-label required">Empreendimento</label>
+        <select class="form-input" id="sel-empreed" onchange="onEmpreendChange()">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Logradouro — obrigatório para Jardim das Flores -->
+    <div class="form-group" id="logradouro-group">
+      <label class="form-label" id="logradouro-label">Rua / Logradouro</label>
+      <input class="form-input" id="logradouro-input" placeholder="Ex.: Rua das Palmeiras, 45">
+      <div id="logradouro-hint" style="font-size:10px;color:var(--text-muted);margin-top:3px"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Quadra</label><input class="form-input" id="f-quadra" placeholder="A"></div>
+      <div class="form-group"><label class="form-label">Lote</label><input class="form-input" id="f-lote" placeholder="01"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Corretor</label>
+        <select class="form-input" id="sel-corretor"><option value="">Selecione...</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Analista</label>
+        <select class="form-input" id="sel-analista"><option value="">Selecione...</option></select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Data da Assinatura</label><input class="form-input" type="date" id="f-assinatura"></div>
+      <div class="form-group">
+        <label class="form-label">📂 Chegada de Garantia (Cartório)</label>
+        <input class="form-input" type="date" id="data-chegada" onchange="onChegadaChange()">
+      </div>
+    </div>
+
+    <!-- Toggle: Documento Recebido? -->
+    <div class="form-group">
+      <label class="form-label">Documento do Cartório Recebido?</label>
+      <div class="toggle-row">
+        <span class="toggle-label" id="toggle-label-text">Não — aguardando chegada</span>
+        <button class="toggle" id="toggle-doc" onclick="toggleDoc()"></button>
+      </div>
+    </div>
+
+    <!-- Alerta de crédito (aparece quando doc é marcado como recebido) -->
+    <div id="credito-alert" style="display:none">
+      <div class="alerta-credito">
+        <div class="icon">💰</div>
+        <div class="text">
+          <div class="title">Crédito Previsto para Amanhã</div>
+          <div class="sub" id="credito-sub">O construtor deve creditar o valor em conta no próximo dia útil.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group"><label class="form-label">Valor Seguro RCPM (Cartão)</label><input class="form-input" id="f-rcpm" placeholder="0.00"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Valor de Avaliação (R$)</label><input class="form-input" type="number" step="0.01" id="f-avaliacao" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Valor de Venda (R$)</label><input class="form-input" type="number" step="0.01" id="f-venda" placeholder="0.00"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">SIKTD OK (Data)</label><input class="form-input" type="date" id="f-siktd-ok"></div>
+      <div class="form-group"><label class="form-label">Envio ao Cartório</label><input class="form-input" type="date" id="f-cartorio-envio"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Etapa do Workflow</label>
+      <input type="hidden" id="f-workflow-step" value="engenharia">
+      <div class="wf-picker" id="wf-picker"></div>
+      <div class="wf-picker-info" id="wf-picker-info"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input" id="f-observacoes" rows="2" placeholder="Anotações internas..."></textarea></div>
+
+
+    <!-- Upload de PDF do contrato -->
+    <div class="form-group">
+      <label class="form-label">📎 Contrato Escaneado (PDF)</label>
+      <div class="upload-area" id="upload-area" onclick="document.getElementById('pdf-input').click()">
+        <input type="file" id="pdf-input" accept=".pdf" onchange="onFileSelect(this)">
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">Clique para anexar o contrato do cartório</div>
+        <div class="upload-sub">PDF · Máx. 10 MB</div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-new')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord()">Salvar Registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: EMPREENDIMENTO
+=================================================================== -->
+<div class="modal-overlay" id="modal-emp">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <h3 id="modal-emp-title">Novo Empreendimento</h3>
+      <button class="modal-close" onclick="closeModal('modal-emp')">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label required">Nome do Empreendimento / Bairro</label><input class="form-input" id="emp-nome" placeholder="Ex.: Jardim das Flores"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Construtora</label><input class="form-input" id="emp-const" placeholder="Ex.: Construtora Beta"></div>
+      <div class="form-group"><label class="form-label">Total de Unidades</label><input class="form-input" type="number" id="emp-unidades" placeholder="0" min="0"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Unidade / Cidade</label>
+      <select class="form-input" id="sel-emp-unidade">
+        <option value="">Nenhuma (sem unidade)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Regra de Entrega de Chaves</label>
+      <div class="toggle-row" style="margin-top:4px">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600" id="emp-chave-label">Padrão — aguarda retorno do cartório</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Ativar para liberar chave imediatamente na assinatura (ex.: Jardim das Flores)</div>
+        </div>
+        <button class="toggle" id="toggle-chave-rapida" onclick="toggleChaveRapida()"></button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-emp')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEmp()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: CORRETOR
+=================================================================== -->
+<div class="modal-overlay" id="modal-corretor">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h3 id="modal-corretor-title">Novo Corretor</h3>
+      <button class="modal-close" onclick="closeModal('modal-corretor')">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label required">Nome Completo</label><input class="form-input" id="cor-nome" placeholder="Ex.: João da Silva"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">CRECI</label><input class="form-input" id="cor-creci" placeholder="12345-F"></div>
+      <div class="form-group"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="cor-tel" placeholder="(92) 99999-9999"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-corretor')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCorretor()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: LANÇAMENTO MANUAL DE COMISSÃO
+=================================================================== -->
+<div class="modal-overlay" id="modal-lancamento">
+  <div class="modal" style="width:440px">
+    <div class="modal-header">
+      <h3>Novo Lançamento Manual</h3>
+      <button class="modal-close" onclick="closeModal('modal-lancamento')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label required">Analista</label>
+      <select class="form-input" id="lanc-analista"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label required">Descrição</label>
+      <input class="form-input" id="lanc-descricao" placeholder="Ex.: Bônus de desempenho, Ajuste de março...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label required">Valor (R$)</label>
+        <input class="form-input" id="lanc-valor" type="number" step="0.01" min="0" placeholder="0,00">
+      </div>
+      <div class="form-group">
+        <label class="form-label required">Mês de referência</label>
+        <input class="form-input" id="lanc-data" type="month">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-lancamento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarLancamento()">Salvar Lançamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: DETALHE DO CLIENTE
+=================================================================== -->
+<div class="modal-overlay" id="modal-detalhe">
+  <div class="modal" style="width:740px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:0">
+    <div style="position:sticky;top:0;background:var(--card);z-index:2;border-bottom:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;gap:14px">
+      <div class="det-avatar" id="det-avatar">?</div>
+      <div style="flex:1;min-width:0">
+        <h3 id="det-titulo" style="margin:0;font-size:16px;font-weight:800;color:var(--primary)"></h3>
+        <div id="det-sub" style="font-size:11px;color:var(--text-muted);margin-top:2px"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div id="det-wf-tag"></div>
+        <button class="btn btn-outline btn-sm" id="det-btn-editar">✏️ Editar</button>
+        <button class="modal-close" onclick="closeModal('modal-detalhe')" style="font-size:20px;padding:0 4px">✕</button>
+      </div>
+    </div>
+    <div id="det-corpo" style="padding:24px"></div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: EXTRATO CONSTRUTORA
+=================================================================== -->
+<div class="modal-overlay" id="modal-export">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Extrato — Construtora Alpha · Vila Imperador</h3>
+      <button class="modal-close" onclick="closeModal('modal-export')">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+      Conferência entre valor pago no cartão e total cobrado, agrupado por lote e casa.
+    </p>
+    <div class="export-block">
+      <h4>Vila Imperador — Construtora Alpha</h4>
+      <div class="export-row"><span>Casa 12 — Q.B L.04 — Carlos Andrade</span><span>R$ 820,00</span></div>
+      <div class="export-row"><span>Casa 44 — Q.D L.07 — Paulo Ferreira</span><span>R$ 920,00</span></div>
+      <div class="export-row"><span>Casa 91 — Q.A L.03 — Tiago Barbosa</span><span>R$ 760,00</span></div>
+      <div class="export-row"><span>Casa 56 — Q.D L.19 — Cristiane Prado</span><span>R$ 950,00</span></div>
+      <div style="border-top:1px solid var(--border);margin-top:8px">
+        <div class="export-total"><span>Total Pago no Cartão</span><span>R$ 38.400,00</span></div>
+        <div class="export-total" style="color:var(--text-muted)"><span>Total Cobrado pela Construtora</span><span>R$ 37.200,00</span></div>
+        <div class="export-diff"><span>⚠ Diferença a verificar</span><span>R$ 1.200,00</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-export')">Fechar</button>
+      <button class="btn btn-success" onclick="closeModal('modal-export');showToast('Extrato exportado para Excel!','ok')">📥 Exportar Excel</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-export');showToast('PDF gerado com sucesso!','ok')">📄 Exportar PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: UNIDADE
+=================================================================== -->
+<div class="modal-overlay" id="modal-unidade">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h3 id="modal-unidade-title">Nova Unidade</h3>
+      <button class="modal-close" onclick="closeModal('modal-unidade')">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label required">Nome da Unidade</label><input class="form-input" id="uni-nome" placeholder="Ex.: Manaus, Santa Maria..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label required">Cidade</label><input class="form-input" id="uni-cidade" placeholder="Ex.: Manaus"></div>
+      <div class="form-group"><label class="form-label required">Estado (UF)</label><input class="form-input" id="uni-estado" placeholder="AM" maxlength="2" style="text-transform:uppercase"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-unidade')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarUnidade()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<script>
+// ── DATA — arrays esvaziados; tudo vem da API ─────────────────────
+const CORRETORES = [];
+const ANALISTAS  = [];
+const EMPREEND   = [];
+const CLIENTES   = [];
+
+const STMAP = {
+  vencido: {lbl:'Atrasado',      cls:'vermelho', rowcls:'row-vencido', ccls:'c-vencido'},
+  proximo: {lbl:'Aguardando Doc',cls:'amarelo',  rowcls:'row-proximo', ccls:'c-proximo'},
+  ok:      {lbl:'Doc Recebido',  cls:'verde',    rowcls:'row-ok',      ccls:'c-ok'},
+};
+
+const WF = [
+  ['done','done','current',''],
+  ['done','current','',''],
+  ['done','done','done','current'],
+  ['done','done','done','done'],
+  ['done','current','',''],
+  ['done','done','done','current'],
+  ['done','done','current',''],
+  ['done','current','',''],
+  ['done','done','current',''],
+  ['done','done','done','done'],
+];
+
+const PAGE_INFO = {
+  dashboard:       ['Dashboard','Painel de Comando — Visão Geral'],
+  clientes:        ['Pipeline','Fluxo comercial — acompanhamento de todos os processos'],
+  empreendimentos: ['Empreendimentos','Cadastro e gestão de loteamentos'],
+  unidades:        ['Unidades & Cidades','Filiais por cidade — filtros e métricas por unidade'],
+  corretores:      ['Configuração de Corretores','Ranking e metas'],
+  rcpm:            ['Relatórios p/ Construtores','Conciliação RCPM e chegadas de cartório'],
+  comissoes:       ['Comissões','Calculadora de comissões por analista · mês de referência'],
+  chaves:          ['Liberar Chaves','Relatório semanal de assinaturas para construtor'],
+  relatorios:      ['Relatórios','Exportação e análise de dados'],
+  configuracoes:   ['Configurações','Gestão de usuários e acessos — somente administradores'],
+};
+
+// ── NAVIGATION ────────────────────────────────────────────────────
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.sidebar-menu a').forEach(a => {
+    if ((a.getAttribute('onclick') || '').includes("'" + page + "'")) a.classList.add('active');
+  });
+  const [title, sub] = PAGE_INFO[page] || [page, ''];
+  document.getElementById('pg-title').textContent = title;
+  document.getElementById('pg-sub').textContent   = sub;
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────
+function renderChartEmpreend(empreendimentos) {
+  const el = document.getElementById('chart-empreend');
+  if (!el) return;
+  if (!empreendimentos || !empreendimentos.length) {
+    el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Nenhum empreendimento.</div>`;
+    return;
+  }
+  const colors = ['blue','green','orange','purple','teal'];
+  const max = Math.max(...empreendimentos.map(e => e.total_clientes), 1);
+  el.innerHTML = empreendimentos.map((e,i) => `
+    <div class="chart-item">
+      <div class="chart-label"><span class="name">${e.nome}</span><span class="val">${e.total_clientes} clientes</span></div>
+      <div class="chart-track"><div class="chart-fill ${colors[i%colors.length]}" style="width:${Math.round(e.total_clientes/max*100)}%"></div></div>
+    </div>`).join('');
+}
+
+function renderRankingDash() {
+  const el = document.getElementById('ranking-dash');
+  const cls = ['gold','silver','bronze','other','other'];
+  const max = CORRETORES[0].vendas;
+  el.innerHTML = CORRETORES.slice(0,5).map((c,i) => `
+    <div class="ranking-item">
+      <div class="rank-pos ${cls[i]}">${i+1}</div>
+      <div class="rank-name">${c.nome}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(c.vendas/max*100)}%"></div></div>
+      <div class="rank-count">${c.vendas}v</div>
+    </div>`).join('');
+}
+
+function renderCargaAnalistas() {
+  const el = document.getElementById('carga-analistas');
+  el.innerHTML = ANALISTAS.map(a => {
+    const ok  = Math.round(a.ok    / a.total * 100);
+    const pnd = Math.round(a.pend  / a.total * 100);
+    const atr = Math.round(a.atraso/ a.total * 100);
+    return `
+      <div class="carga-item">
+        <div class="carga-header"><div class="carga-name">${a.nome}</div><div class="carga-total">${a.total} processos</div></div>
+        <div class="carga-pills">
+          <span class="pill green">${a.ok} Concluídos</span>
+          <span class="pill yellow">${a.pend} Pendentes</span>
+          <span class="pill red">${a.atraso} Atraso</span>
+        </div>
+        <div class="carga-bar">
+          <div class="carga-seg g" style="flex:${ok}"></div>
+          <div class="carga-seg y" style="flex:${pnd}"></div>
+          <div class="carga-seg r" style="flex:${atr}"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderRankingFull() {
+  const el = document.getElementById('ranking-full');
+  if (!el) return;
+  const cls = ['gold','silver','bronze','other','other','other','other','other','other','other'];
+  const max = CORRETORES[0].vendas;
+  el.innerHTML = `<div class="ranking-list">${CORRETORES.map((c,i) => `
+    <div class="ranking-item">
+      <div class="rank-pos ${cls[i]}">${i+1}</div>
+      <div class="rank-name">${c.nome}</div>
+      <div style="font-size:11px;color:var(--text-muted);min-width:130px">${c.empreed}</div>
+      <div class="rank-bar-wrap" style="width:100px"><div class="rank-bar" style="width:${Math.round(c.vendas/max*100)}%"></div></div>
+      <div class="rank-count">${c.vendas} vendas</div>
+    </div>`).join('')}</div>`;
+}
+
+// ── TABLE ────────────────────────────────────────────────────────
+function renderTable(data) {
+  const tb = document.getElementById('tbody-clientes');
+  if (!tb) return;
+  tb.innerHTML = data.map((c,i) => {
+    const st  = STMAP[c.s];
+    const wf  = WF[i] || WF[0];
+    const steps = ['Docs','Análise','Cartório','Concluído'];
+    const stepsHtml = steps.map((s,si) => `<div class="wf-step ${wf[si]||''}">${s}</div>`).join('');
+    const isJdF = c.empreed === 'Jardim das Flores';
+
+    // Logradouro: destaque especial para Jardim das Flores
+    const logradouroHtml = isJdF
+      ? `<span class="logradouro-jf">🌸 ${c.logradouro || '<em style="color:#ef4444">PREENCHER</em>'}</span>`
+      : (c.logradouro ? `<span class="logradouro-highlight">${c.logradouro}</span>` : '<span style="color:#cbd5e1">—</span>');
+
+    // Doc recebido
+    const docHtml = c.docRecebido
+      ? '<span class="doc-recebido">✓ Sim</span>'
+      : (c.s === 'vencido' ? '<span class="doc-pendente">⚠ Atrasado</span>' : '<span class="doc-aguardando">⏳ Não</span>');
+
+    // Crédito previsto
+    const creditoHtml = c.docRecebido
+      ? '<span class="credito-badge">💰 Amanhã</span>'
+      : '<span style="color:#cbd5e1;font-size:11px">—</span>';
+
+    // PDF
+    const pdfHtml = c.pdf
+      ? '<span class="tag verde">PDF ✓</span>'
+      : '<span class="tag cinza">Sem PDF</span>';
+
+    return `
+      <tr class="${st.rowcls}">
+        <td>${c.num}</td>
+        <td><strong>${c.nome}</strong></td>
+        <td style="color:var(--text-muted);font-family:monospace;font-size:11px">${c.cpf}</td>
+        <td>${isJdF ? '<span class="tag azul">🌸 ' + c.empreed + '</span>' : '<span class="tag cinza">' + c.empreed + '</span>'}</td>
+        <td>Casa ${c.casa}</td>
+        <td>Q.${c.q}/L.${c.l}</td>
+        <td>${logradouroHtml}</td>
+        <td>${c.corretor}</td>
+        <td>${c.analista}</td>
+        <td style="color:var(--text-muted)">${c.ass}</td>
+        <td style="color:var(--text-muted)">${c.chegCartorio}</td>
+        <td>${docHtml}</td>
+        <td>${creditoHtml}</td>
+        <td><strong>${c.rcpm}</strong></td>
+        <td>${pdfHtml}</td>
+        <td><div class="wf" style="min-width:150px">${stepsHtml}</div></td>
+      </tr>`;
+  }).join('');
+}
+
+// ── CARDS ────────────────────────────────────────────────────────
+function renderCards(data) {
+  const el = document.getElementById('view-cards');
+  if (!el) return;
+  el.innerHTML = data.map(c => {
+    const st = STMAP[c.s];
+    const isJdF = c.empreed === 'Jardim das Flores';
+    const docHtml = c.docRecebido
+      ? '<span class="doc-recebido">✓ Doc Recebido</span>'
+      : (c.s === 'vencido' ? '<span class="doc-pendente">⚠ Atrasado</span>' : '<span class="doc-aguardando">⏳ Aguardando</span>');
+    const creditoHtml = c.docRecebido ? '<div style="margin-top:6px"><span class="credito-badge">💰 Crédito Previsto: Amanhã</span></div>' : '';
+    const logradouroHtml = (isJdF && c.logradouro)
+      ? `<div style="margin-top:4px;font-size:11px"><span class="logradouro-jf">🌸 ${c.logradouro}</span></div>` : '';
+    return `
+      <div class="client-card ${st.ccls}">
+        <div class="cc-top">
+          <div>
+            <div class="cc-num">Nº ${c.num}</div>
+            <div class="cc-name">${c.nome}</div>
+            <div class="cc-cpf">${c.cpf}</div>
+          </div>
+          <div style="text-align:right">
+            <span class="tag ${isJdF?'azul':'cinza'}">${isJdF?'🌸 ':''}${c.empreed}</span><br>
+            <span style="font-size:10px;color:var(--text-muted)">Casa ${c.casa}</span>
+          </div>
+        </div>
+        ${logradouroHtml}
+        <div class="cc-doc">${docHtml}${creditoHtml}</div>
+        <div class="cc-row">
+          <div class="cc-info"><div class="lbl">Analista</div><div class="val">${c.analista}</div></div>
+          <div class="cc-info"><div class="lbl">Chegada Cartório</div><div class="val">${c.chegCartorio}</div></div>
+          <div class="cc-rcpm"><div class="lbl">Seg. RCPM</div><div class="val">${c.rcpm}</div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── VIEW TOGGLE ───────────────────────────────────────────────────
+function setView(mode) {
+  const tbl  = document.getElementById('view-table');
+  const crd  = document.getElementById('view-cards');
+  const btnT = document.getElementById('btn-table-view');
+  const btnC = document.getElementById('btn-card-view');
+  if (mode === 'table') {
+    tbl.style.display = ''; crd.classList.remove('active');
+    btnT.classList.add('active'); btnC.classList.remove('active');
+  } else {
+    tbl.style.display = 'none'; crd.classList.add('active');
+    btnC.classList.add('active'); btnT.classList.remove('active');
+  }
+}
+
+// ── QUICK FILTER ──────────────────────────────────────────────────
+let activeEmp = '';
+function qfFilter(btn, emp) {
+  document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeEmp = emp;
+  filterTable();
+}
+
+function filterTable() {
+  const q  = (document.getElementById('srch')?.value || '').toLowerCase();
+  const an = document.getElementById('flt-analista')?.value || '';
+  const st = document.getElementById('flt-status')?.value   || '';
+  const stMap = {ok:'ok', proximo:'proximo', vencido:'vencido'};
+
+  const filtered = CLIENTES.filter(c => {
+    const mq  = !q  || c.nome.toLowerCase().includes(q) || c.cpf.includes(q)
+                    || c.casa.includes(q) || c.empreed.toLowerCase().includes(q)
+                    || (c.logradouro||'').toLowerCase().includes(q);
+    const man = !an || c.analista === an;
+    const mst = !st || c.s === (stMap[st] || '');
+    const mem = !activeEmp || c.empreed === activeEmp;
+    return mq && man && mst && mem;
+  });
+  renderTable(filtered);
+  renderCards(filtered);
+}
+
+// ── TABS ──────────────────────────────────────────────────────────
+function tab(btn, id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['t-conciliacao','t-cartorio'].forEach(t => {
+    document.getElementById(t).style.display = t === id ? 'block' : 'none';
+  });
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────
+function openModal(id) {
+  // só reseta se for abrir como NOVO registro (editarCliente já preenche antes de chamar aqui)
+  if (id === 'modal-new' && _editId === null) _resetModal();
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-new' && _editId === null) { loadFormSelects(); _renderWfPicker("engenharia"); }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function saveRecord() {
+  const emp = document.getElementById('sel-empreed').value;
+  const logr = document.getElementById('logradouro-input').value.trim();
+  if (emp === 'Jardim das Flores' && !logr) {
+    document.getElementById('logradouro-input').classList.add('field-required');
+    showToast('Logradouro obrigatório para Jardim das Flores!','');
+    return;
+  }
+  closeModal('modal-new');
+  showToast('Registro salvo com sucesso!','ok');
+}
+
+// ── EMPREENDIMENTO CHANGE (logradouro) ────────────────────────────
+function onEmpreendChange() {
+  const sel   = document.getElementById('sel-empreed');
+  const nome  = sel.selectedOptions[0]?.dataset.nome || sel.value;
+  const label = document.getElementById('logradouro-label');
+  const input = document.getElementById('logradouro-input');
+  const hint  = document.getElementById('logradouro-hint');
+
+  if (nome === 'Jardim das Flores') {
+    label.className = 'form-label jf-required';
+    input.classList.add('field-highlight');
+    input.placeholder = 'Ex.: Rua das Acácias, 88 — obrigatório aqui';
+    hint.textContent = '⚠ Para o Jardim das Flores o nome da rua é essencial para identificação do imóvel.';
+    hint.style.color = '#1d4ed8';
+  } else {
+    label.className = 'form-label';
+    input.classList.remove('field-highlight','field-required');
+    input.placeholder = 'Ex.: Av. Principal, 100';
+    hint.textContent = '';
+  }
+}
+
+// ── TOGGLE DOCUMENTO ──────────────────────────────────────────────
+let docRecebido = false;
+function toggleDoc() {
+  docRecebido = !docRecebido;
+  const btn  = document.getElementById('toggle-doc');
+  const lbl  = document.getElementById('toggle-label-text');
+  const alrt = document.getElementById('credito-alert');
+  const sub  = document.getElementById('credito-sub');
+
+  btn.className = docRecebido ? 'toggle on' : 'toggle';
+  if (docRecebido) {
+    lbl.textContent = 'Sim — documento recebido e escaneado';
+    lbl.style.color = 'var(--success)';
+    alrt.style.display = 'block';
+    const chegada = document.getElementById('data-chegada').value;
+    const amanha = chegada || 'próximo dia útil';
+    sub.textContent = `Documento registrado em ${chegada || 'hoje'}. Crédito do construtor previsto para amanhã.`;
+    showToast('Documento marcado como recebido — Crédito previsto para amanhã!','ok');
+  } else {
+    lbl.textContent = 'Não — aguardando chegada';
+    lbl.style.color = '';
+    alrt.style.display = 'none';
+  }
+}
+
+// ── DATA CHEGADA CHANGE ───────────────────────────────────────────
+function onChegadaChange() {
+  if (docRecebido) {
+    const chegada = document.getElementById('data-chegada').value;
+    document.getElementById('credito-sub').textContent =
+      `Documento registrado em ${chegada}. Crédito do construtor previsto para amanhã.`;
+  }
+}
+
+// ── FILE UPLOAD ───────────────────────────────────────────────────
+function onFileSelect(input) {
+  const area = document.getElementById('upload-area');
+  if (input.files && input.files[0]) {
+    const f = input.files[0];
+    area.classList.add('upload-done');
+    area.innerHTML = `
+      <div class="upload-icon">✅</div>
+      <div class="upload-text">${f.name}</div>
+      <div class="upload-sub">${(f.size/1024).toFixed(1)} KB · PDF anexado</div>`;
+    showToast('PDF anexado com sucesso!','ok');
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+let _tt;
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  el.className = 'toast show' + (type === 'ok' ? ' success' : type === 'warn' ? ' warn' : '');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), 3400);
+}
+
+// ── INIT — dados carregados via API abaixo ────────────────────────
+
+// ================================================================
+//  CAMADA DE API — substitui dados estáticos quando o backend
+//  estiver disponível. Em modo offline usa os dados locais acima.
+// ================================================================
+
+const API_BASE = "/api";
+
+// ── Auth state ────────────────────────────────────────────────────
+let _currentUser = null;
+
+async function apiFetch(path, opts = {}) {
+  const token = localStorage.getItem("imv_token");
+  const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(API_BASE + path, { ...opts, headers });
+
+  if (res.status === 401) {
+    _clearAuthState();
+    _showLoginScreen();
+    throw new Error("Sessão expirada. Faça login novamente.");
+  }
+  if (res.status === 403) {
+    showToast("Acesso negado — sem permissão para esta ação", "error");
+    throw new Error("Sem permissão");
+  }
+  if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
+  if (res.status === 204 || res.headers.get("content-length") === "0") return null;
+  return res.json();
+}
+
+// ── Carrega o dashboard da API ────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [data, empreends] = await Promise.all([
+      apiFetch("/dashboard"),
+      apiFetch("/empreendimentos").catch(() => []),
+    ]);
+    renderChartEmpreend(empreends);
+
+    // KPIs
+    document.querySelector(".kpi-card.blue .kpi-value").innerHTML =
+      `${data.kpis.total_vendas} <span>casas</span>`;
+    document.querySelector(".kpi-card.green .kpi-value").textContent =
+      data.kpis.top_corretor;
+    document.querySelector(".kpi-card.green .kpi-meta").innerHTML =
+      `${data.kpis.top_corretor_vendas} vendas`;
+    document.querySelector(".kpi-card.orange .kpi-value").innerHTML =
+      `${data.kpis.docs_aguardados_semana} <span>aguardados</span>`;
+    document.querySelector(".kpi-card.orange .kpi-meta").innerHTML =
+      `<span class="up">${data.kpis.docs_recebidos_semana} recebidos</span>`;
+    document.querySelector(".kpi-card.gray .kpi-value").innerHTML =
+      `${data.kpis.processos_pendentes} <span>pendentes</span>`;
+    document.querySelector(".kpi-card.gray .kpi-meta").innerHTML =
+      `<span class="down">${data.kpis.processos_atrasados} em atraso</span>`;
+
+    // Ranking corretores
+    const rankEl = document.getElementById("ranking-dash");
+    const clsMap = ["gold","silver","bronze","other","other"];
+    const maxV = data.ranking_corretores[0]?.total_vendas || 1;
+    rankEl.innerHTML = data.ranking_corretores.slice(0,5).map((c,i) => `
+      <div class="ranking-item">
+        <div class="rank-pos ${clsMap[i]}">${i+1}</div>
+        <div class="rank-name">${c.nome}</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(c.total_vendas/maxV*100)}%"></div></div>
+        <div class="rank-count">${c.total_vendas}v</div>
+      </div>`).join("");
+
+    // Carga analistas
+    const cargaEl = document.getElementById("carga-analistas");
+    cargaEl.innerHTML = data.carga_analistas.map(a => {
+      const ok  = Math.round(a.concluidos / (a.total||1) * 100);
+      const pnd = Math.round(a.pendentes  / (a.total||1) * 100);
+      const atr = Math.round(a.atrasados  / (a.total||1) * 100);
+      return `
+        <div class="carga-item">
+          <div class="carga-header"><div class="carga-name">${a.nome}</div><div class="carga-total">${a.total} processos</div></div>
+          <div class="carga-pills">
+            <span class="pill green">${a.concluidos} Concluídos</span>
+            <span class="pill yellow">${a.pendentes} Pendentes</span>
+            <span class="pill red">${a.atrasados} Atraso</span>
+          </div>
+          <div class="carga-bar">
+            <div class="carga-seg g" style="flex:${ok}"></div>
+            <div class="carga-seg y" style="flex:${pnd}"></div>
+            <div class="carga-seg r" style="flex:${atr}"></div>
+          </div>
+        </div>`;
+    }).join("");
+
+    // Alertas cartório
+    const alertaEl = document.querySelector(".alerta-items");
+    const kpiAlertaNum = document.querySelector(".alerta-num");
+    if (alertaEl) {
+      const pendentes = data.alertas_cartorio.filter(a => !a.doc_recebido);
+      if (kpiAlertaNum) kpiAlertaNum.textContent = pendentes.length;
+      alertaEl.innerHTML = data.alertas_cartorio.map(a => {
+        const dotCls = a.status === "recebido" ? "blue" : (a.status === "atrasado" || a.status === "atrasado_25d") ? "red" : "orange";
+        const diasText = a.dias_cartorio ? ` · ${a.dias_cartorio} dias no cartório` : "";
+        const badge  = a.status === "recebido"
+          ? `<span class="doc-recebido">✓ Recebido — Crédito: Amanhã</span>`
+          : a.status === "atrasado_25d"
+          ? `<span class="badge-25d">⚠ +25 dias sem retorno${diasText}</span>`
+          : a.status === "atrasado"
+          ? `<span class="doc-pendente">⚠ Atrasado${diasText}</span>`
+          : `<span class="doc-aguardando">⏳ Aguardando${diasText}</span>`;
+        return `
+          <div class="alerta-row">
+            <div class="alerta-dot ${dotCls}"></div>
+            <div class="cliente">${a.nome}</div>
+            <div>${badge}</div>
+          </div>`;
+      }).join("");
+    }
+
+  } catch (e) {
+    console.error("Erro ao carregar dashboard:", e.message);
+  }
+}
+
+// ── Workflow badge ────────────────────────────────────────────────
+const WF_DEFS = [
+  {key:"engenharia",   num:1, label:"Engenharia"},
+  {key:"aprovacao",    num:2, label:"Aprovação"},
+  {key:"documentacao", num:3, label:"Certidões"},
+  {key:"siktd",        num:4, label:"SIKTD"},
+  {key:"cartorio",     num:5, label:"Cartório"},
+  {key:"concluido",    num:6, label:"Concluído"},
+];
+function wfBadge(step, idx, total) {
+  const def = WF_DEFS[idx] || WF_DEFS[0];
+  const dots = WF_DEFS.map((_,i) => `<div class="wf-dot${i<=idx?' done':''}"></div>`).join("");
+  return `<div class="wf-badge s${idx}"><span class="wf-num">${def.num}</span>${def.label}<div class="wf-dots">${dots}</div></div>`;
+}
+
+// ── Carrega clientes da API ───────────────────────────────────────
+async function loadClientes(params = {}) {
+  try {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([,v]) => v))
+    ).toString();
+    const data = await apiFetch(`/clientes${qs ? "?" + qs : ""}`);
+
+    const WFSTEPS  = ["engenharia","aprovacao","documentacao","siktd","cartorio","concluido"];
+    const WFLABELS = ["Eng.","Aprovação","Docs","SIKTD","Cartório","Concluído"];
+
+    const tbody = document.getElementById("tbody-clientes");
+    if (!tbody) return;
+
+    tbody.innerHTML = data.map(c => {
+      const rowcls = {ok:"row-ok", proximo:"row-proximo", vencido:"row-vencido"}[c.status] || "";
+      const isJdF  = c.empreendimento?.nome === "Jardim das Flores";
+
+      // Casa + logradouro condensado
+      const locHtml = isJdF && c.logradouro
+        ? `<div>Casa ${c.casa_num}</div><div class="logradouro-jf" style="margin-top:2px;font-size:10px">🌸 ${c.logradouro}</div>`
+        : `Casa ${c.casa_num} <span style="color:#cbd5e1;font-size:10px">Q.${c.quadra||'?'}/L.${c.lote||'?'}</span>`;
+
+      const docHtml = c.doc_recebido
+        ? '<span class="doc-recebido">✓ Sim</span>'
+        : (c.status === "vencido" ? '<span class="doc-pendente">⚠</span>' : '<span class="doc-aguardando">⏳</span>');
+
+      const creditoHtml = c.doc_recebido ? '<span class="credito-badge">💰 Amanhã</span>' : '<span style="color:#cbd5e1">—</span>';
+
+      const wfIdx = WFSTEPS.indexOf(c.workflow_step);
+      const stepsHtml = wfBadge(c.workflow_step, wfIdx, WFSTEPS.length);
+
+      const acaoHtml = !c.doc_recebido
+        ? `<button class="btn btn-success btn-sm" onclick="marcarRecebido(${c.id},this)" title="Marcar documento como recebido">✓</button>`
+        : `<span style="font-size:11px;color:var(--success)">✓</span>`;
+
+      return `
+        <tr class="${rowcls}" data-id="${c.id}" onclick="verCliente(${c.id})" style="cursor:pointer" title="Clique para ver detalhes">
+          <td>${c.num_ordem}</td>
+          <td>
+            <div style="font-weight:600">${c.nome}</div>
+            <div style="font-size:10px;color:var(--text-muted);font-family:monospace">${c.cpf}</div>
+          </td>
+          <td><span class="tag ${isJdF?'azul':'cinza'}">${isJdF?'🌸 ':''}${c.empreendimento?.nome||''}</span></td>
+          <td>${locHtml}</td>
+          <td style="font-size:12px">${c.corretor?.nome||'—'}</td>
+          <td style="font-size:12px">${c.analista?.nome||'—'}</td>
+          <td style="color:var(--text-muted);font-size:12px">${c.chegada_cartorio||'—'}</td>
+          <td>${docHtml}</td>
+          <td>${creditoHtml}</td>
+          <td style="font-weight:600;font-size:12px">R$&nbsp;${Number(c.valor_rcpm||0).toFixed(2).replace('.',',')}</td>
+          <td><div class="wf" style="min-width:140px">${stepsHtml}</div></td>
+          <td onclick="event.stopPropagation()">
+            <div style="display:flex;gap:4px;align-items:center">
+              <button class="btn btn-outline btn-sm" onclick="editarCliente(${c.id})" title="Editar">✏️</button>
+              ${acaoHtml}
+              <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5" onclick="excluirCliente(${c.id},'${c.nome.replace(/'/g,"\\'")}',this)" title="Mover para lixeira">🗑</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join("");
+
+    // cards
+    const cardsEl = document.getElementById("view-cards");
+    if (cardsEl) {
+      cardsEl.innerHTML = data.map(c => {
+        const st = { ok:"c-ok", proximo:"c-proximo", vencido:"c-vencido" }[c.status] || "c-ok";
+        const isJdF = c.empreendimento?.nome === "Jardim das Flores";
+        const docHtml = c.doc_recebido
+          ? '<span class="doc-recebido">✓ Doc Recebido</span>'
+          : (c.status === "vencido" ? '<span class="doc-pendente">⚠ Atrasado</span>' : '<span class="doc-aguardando">⏳ Aguardando</span>');
+        const creditoHtml = c.doc_recebido ? '<div style="margin-top:6px"><span class="credito-badge">💰 Crédito Previsto: Amanhã</span></div>' : '';
+        const logHtml = (isJdF && c.logradouro) ? `<div style="margin-top:4px;font-size:11px"><span class="logradouro-jf">🌸 ${c.logradouro}</span></div>` : '';
+        return `
+          <div class="client-card ${st}">
+            <div class="cc-top">
+              <div>
+                <div class="cc-num">Nº ${c.num_ordem}</div>
+                <div class="cc-name">${c.nome}</div>
+                <div class="cc-cpf">${c.cpf}</div>
+              </div>
+              <div style="text-align:right">
+                <span class="tag ${isJdF?'azul':'cinza'}">${isJdF?'🌸 ':''}${c.empreendimento?.nome||''}</span><br>
+                <span style="font-size:10px;color:var(--text-muted)">Casa ${c.casa_num}</span>
+              </div>
+            </div>
+            ${logHtml}
+            <div class="cc-doc">${docHtml}${creditoHtml}</div>
+            <div class="cc-row">
+              <div class="cc-info"><div class="lbl">Analista</div><div class="val">${c.analista?.nome||'—'}</div></div>
+              <div class="cc-info"><div class="lbl">Chegada Cartório</div><div class="val">${c.chegada_cartorio||'—'}</div></div>
+              <div class="cc-rcpm"><div class="lbl">Seg. RCPM</div><div class="val">R$ ${Number(c.valor_rcpm||0).toFixed(2).replace('.',',')}</div></div>
+            </div>
+          </div>`;
+      }).join("");
+    }
+  } catch (e) {
+    console.error("Erro ao carregar clientes:", e.message);
+    const tb = document.getElementById("tbody-clientes");
+    if (tb) tb.innerHTML = `<tr><td colspan="12" style="padding:32px;text-align:center;color:var(--text-muted)">Erro ao carregar dados. Verifique a conexão com o servidor.</td></tr>`;
+  }
+}
+
+// ── Intercepta filterTable para usar API ─────────────────────────
+const _filterTableOriginal = filterTable;
+filterTable = function() {
+  const q       = document.getElementById("srch")?.value || "";
+  const anaId   = document.getElementById("flt-analista")?.value || "";
+  const st      = document.getElementById("flt-status")?.value || "";
+  const uniId   = document.getElementById("flt-unidade")?.value || "";
+  const empObj  = _empsCache.find(e => e.nome === activeEmp);
+  const empId   = empObj ? empObj.id : "";
+  loadClientes({ busca: q, status: st, empreendimento_id: empId, analista_id: anaId, unidade_id: uniId });
+};
+
+// ── Sobrescreve nav para carregar dados via API ───────────────────
+const _navOriginal = nav;
+nav = function(page) {
+  _navOriginal(page);
+  if (page === "dashboard") loadDashboard();
+  if (page === "clientes")  { loadClientes(); loadFormSelects(); }
+  if (page === "comissoes") loadComissoes();
+  if (page === "chaves")    loadChaves();
+  if (page === "corretores")    loadCorretores();
+  if (page === "empreendimentos") { loadFormSelects(); loadEmpreendimentos(); }
+  if (page === "unidades")        loadUnidades();
+  if (page === "lixeira")         loadLixeira();
+  if (page === "configuracoes")   loadUsuarios();
+};
+
+// ── Upload de PDF via API ─────────────────────────────────────────
+async function uploadPdfApi(clienteId, file) {
+  const form = new FormData();
+  form.append("arquivo", file);
+  const token = localStorage.getItem("imv_token");
+  const res = await fetch(`${API_BASE}/clientes/${clienteId}/upload`, {
+    method: "POST", body: form,
+    headers: token ? { "Authorization": `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error("Falha no upload");
+  return res.json();
+}
+
+// ── Controle de edição ────────────────────────────────────────────
+let _editId = null; // null = novo registro, number = editando
+
+function _resetModal() {
+  _editId = null;
+  document.querySelector("#modal-new h3").textContent = "Novo Registro";
+  document.querySelector("#modal-new .btn-primary").textContent = "Salvar Registro";
+  ["f-num-ordem","f-nome","f-cpf","f-casa","f-quadra","f-lote",
+   "f-assinatura","data-chegada","f-rcpm","logradouro-input","f-avaliacao","f-venda","f-siktd-ok","f-cartorio-envio","f-observacoes"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  docRecebido = false;
+  document.getElementById("toggle-doc").className = "toggle";
+  document.getElementById("toggle-label-text").textContent = "Não — aguardando chegada";
+  document.getElementById("toggle-label-text").style.color = "";
+  document.getElementById("credito-alert").style.display = "none";
+  document.getElementById("f-num-ordem").disabled = false;
+  document.getElementById("f-cpf").disabled = false;
+  _renderWfPicker("engenharia");
+}
+
+async function editarCliente(id) {
+  try {
+    await loadFormSelects();
+    const c = await apiFetch(`/clientes/${id}`);
+    _editId = id;
+    document.querySelector("#modal-new h3").textContent = `Editar — ${c.nome}`;
+    document.querySelector("#modal-new .btn-primary").textContent = "Salvar Alterações";
+
+    document.getElementById("f-num-ordem").value = c.num_ordem;
+    document.getElementById("f-num-ordem").disabled = true; // num_ordem não muda
+    document.getElementById("f-nome").value = c.nome;
+    document.getElementById("f-cpf").value = c.cpf;
+    document.getElementById("f-cpf").disabled = true; // CPF não muda
+    document.getElementById("f-casa").value = c.casa_num;
+    document.getElementById("f-quadra").value = c.quadra || "";
+    document.getElementById("f-lote").value = c.lote || "";
+    document.getElementById("logradouro-input").value = c.logradouro || "";
+    document.getElementById("f-assinatura").value = c.data_assinatura || "";
+    document.getElementById("data-chegada").value = c.chegada_cartorio || "";
+    document.getElementById("f-rcpm").value = c.valor_rcpm || "";
+    document.getElementById("f-avaliacao").value = c.valor_avaliacao || "";
+    document.getElementById("f-venda").value = c.valor_venda || "";
+    document.getElementById("f-siktd-ok").value = c.data_siktd_ok || "";
+    document.getElementById("f-cartorio-envio").value = c.data_cartorio_envio || "";
+    document.getElementById("f-observacoes").value = c.observacoes || "";
+    _renderWfPicker(c.workflow_step || "engenharia");
+
+    // selects
+    if (c.empreendimento?.id) {
+      document.getElementById("sel-empreed").value = c.empreendimento.id;
+      onEmpreendChange();
+    }
+    if (c.corretor?.id)  document.getElementById("sel-corretor").value = c.corretor.id;
+    if (c.analista?.id)  document.getElementById("sel-analista").value = c.analista.id;
+
+    // toggle doc recebido
+    if (c.doc_recebido) {
+      docRecebido = true;
+      document.getElementById("toggle-doc").className = "toggle on";
+      document.getElementById("toggle-label-text").textContent = "Sim — documento recebido e escaneado";
+      document.getElementById("toggle-label-text").style.color = "var(--success)";
+      document.getElementById("credito-alert").style.display = "block";
+    }
+
+    openModal("modal-new");
+  } catch (e) {
+    showToast("Erro ao carregar registro: " + e.message, "");
+  }
+}
+
+// ── Cache de empreendimentos e unidades (para filtros) ─────────────
+let _empsCache      = [];
+let _unidadesCache  = [];
+
+// ── Carrega selects do formulário via API ─────────────────────────
+async function loadFormSelects() {
+  try {
+    const [empreends, corretores, analistas, unidades] = await Promise.all([
+      apiFetch("/empreendimentos").catch(() => []),
+      apiFetch("/corretores").catch(() => []),
+      apiFetch("/analistas").catch(() => []),
+      apiFetch("/unidades").catch(() => []),
+    ]);
+    _unidadesCache = unidades;
+
+    // Atualiza selects de unidade (modal-emp + filtros)
+    const unidadeOpts = '<option value="">Nenhuma</option>' +
+      unidades.map(u => `<option value="${u.id}">${u.nome} — ${u.cidade}/${u.estado}</option>`).join("");
+    const selEmpUni = document.getElementById("sel-emp-unidade");
+    if (selEmpUni) selEmpUni.innerHTML = '<option value="">Nenhuma (sem unidade)</option>' +
+      unidades.map(u => `<option value="${u.id}">${u.nome} — ${u.cidade}/${u.estado}</option>`).join("");
+
+    const fltUni = document.getElementById("flt-unidade");
+    if (fltUni) {
+      const curU = fltUni.value;
+      fltUni.innerHTML = '<option value="">Todas as Unidades</option>' +
+        unidades.map(u => `<option value="${u.id}">${u.nome} — ${u.cidade}</option>`).join("");
+      fltUni.value = curU;
+    }
+    const fltEmpUni = document.getElementById("flt-emp-unidade");
+    if (fltEmpUni) {
+      const curEU = fltEmpUni.value;
+      fltEmpUni.innerHTML = '<option value="">Todas as Unidades</option>' +
+        unidades.map(u => `<option value="${u.id}">${u.nome} — ${u.cidade}</option>`).join("");
+      fltEmpUni.value = curEU;
+    }
+
+    _empsCache = empreends;
+    // Atualiza filtros rápidos dinamicamente
+    const qf = document.getElementById("quick-filters");
+    if (qf) {
+      qf.innerHTML = '<button class="qf-btn active" onclick="qfFilter(this,\'\')">Todos</button>' +
+        empreends.map(e => {
+          const lbl = e.chave_rapida ? "🌸 " + e.nome : e.nome;
+          return `<button class="qf-btn" onclick="qfFilter(this,'${e.nome}')">${lbl}</button>`;
+        }).join("");
+    }
+    const selEmp = document.getElementById("sel-empreed");
+    selEmp.innerHTML = '<option value="">Selecione...</option>' +
+      empreends.map(e => `<option value="${e.id}" data-nome="${e.nome}">${e.nome}</option>`).join("");
+
+    const selCor = document.getElementById("sel-corretor");
+    selCor.innerHTML = '<option value="">Selecione...</option>' +
+      corretores.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+
+    const selAna = document.getElementById("sel-analista");
+    selAna.innerHTML = '<option value="">Selecione...</option>' +
+      analistas.map(a => `<option value="${a.id}">${a.nome}</option>`).join("");
+
+    // Atualiza filtro de analista na tabela principal
+    const fltAna = document.getElementById("flt-analista");
+    if (fltAna) {
+      const cur = fltAna.value;
+      fltAna.innerHTML = '<option value="">Todos os Analistas</option>' +
+        analistas.map(a => `<option value="${a.id}">${a.nome}</option>`).join("");
+      fltAna.value = cur; // preserva seleção atual
+    }
+  } catch (e) {
+    console.warn("Não foi possível carregar selects:", e.message);
+  }
+}
+
+// ── Salva novo registro via API ───────────────────────────────────
+saveRecord = async function() {
+  const selEmp = document.getElementById("sel-empreed");
+  const empId  = selEmp.value;
+  const empNome = selEmp.selectedOptions[0]?.dataset.nome || "";
+  const logr   = document.getElementById("logradouro-input").value.trim();
+
+  if (!empId) { showToast("Selecione o empreendimento!", ""); return; }
+  if (empNome === "Jardim das Flores" && !logr) {
+    document.getElementById("logradouro-input").classList.add("field-required");
+    showToast("Logradouro obrigatório para Jardim das Flores!", ""); return;
+  }
+
+  const numOrdem = document.getElementById("f-num-ordem").value.trim();
+  const nome     = document.getElementById("f-nome").value.trim();
+  const cpf      = document.getElementById("f-cpf").value.trim();
+  const casa     = document.getElementById("f-casa").value.trim();
+  if (!numOrdem || !nome || !cpf || !casa) {
+    showToast("Preencha os campos obrigatórios!", ""); return;
+  }
+
+  const payload = {
+    num_ordem:         numOrdem,
+    nome:              nome,
+    cpf:               cpf,
+    empreendimento_id: parseInt(empId),
+    casa_num:          casa,
+    logradouro:        logr || null,
+    quadra:            document.getElementById("f-quadra").value.trim() || null,
+    lote:              document.getElementById("f-lote").value.trim() || null,
+    corretor_id:       parseInt(document.getElementById("sel-corretor").value) || null,
+    analista_id:       parseInt(document.getElementById("sel-analista").value) || null,
+    data_assinatura:   document.getElementById("f-assinatura").value || null,
+    chegada_cartorio:  document.getElementById("data-chegada").value || null,
+    doc_recebido:      docRecebido,
+    valor_rcpm:        document.getElementById("f-rcpm").value || null,
+    valor_avaliacao:   document.getElementById("f-avaliacao").value || null,
+    valor_venda:       document.getElementById("f-venda").value || null,
+    data_siktd_ok:     document.getElementById("f-siktd-ok").value || null,
+    data_cartorio_envio: document.getElementById("f-cartorio-envio").value || null,
+    observacoes:       document.getElementById("f-observacoes").value.trim() || null,
+    workflow_step:     document.getElementById("f-workflow-step").value || "engenharia",
+  };
+
+  try {
+    showToast(_editId ? "Atualizando..." : "Salvando...", "");
+    if (_editId) {
+      // edição — envia apenas campos editáveis (sem num_ordem e cpf)
+      const { num_ordem, cpf, ...editPayload } = payload;
+      await apiFetch(`/clientes/${_editId}`, { method: "PUT", body: JSON.stringify(editPayload) });
+      showToast("Registro atualizado com sucesso!", "ok");
+    } else {
+      await apiFetch("/clientes", { method: "POST", body: JSON.stringify(payload) });
+      showToast("Registro salvo com sucesso!", "ok");
+    }
+    closeModal("modal-new");
+    loadClientes();
+    loadDashboard();
+  } catch (err) {
+    showToast("Erro: " + err.message, "");
+  }
+};
+
+// ── Marcar documento como recebido diretamente da tabela ──────────
+async function marcarRecebido(clienteId, btn) {
+  try {
+    btn.disabled = true;
+    btn.textContent = "...";
+    await apiFetch(`/clientes/${clienteId}`, {
+      method: "PUT",
+      body: JSON.stringify({ doc_recebido: true, status: "ok" }),
+    });
+    showToast("Documento marcado como recebido! Crédito previsto: amanhã.", "ok");
+    loadClientes();
+    loadDashboard();
+  } catch (e) {
+    showToast("Erro ao atualizar: " + e.message, "");
+    btn.disabled = false;
+    btn.textContent = "✓ Recebido";
+  }
+}
+
+
+
+
+// ── Empreendimentos CRUD ──────────────────────────────────────────
+let _editEmpId = null;
+let _chaveRapidaAtiva = false;
+
+function toggleChaveRapida() {
+  _chaveRapidaAtiva = !_chaveRapidaAtiva;
+  const btn = document.getElementById("toggle-chave-rapida");
+  const lbl = document.getElementById("emp-chave-label");
+  btn.className = _chaveRapidaAtiva ? "toggle on" : "toggle";
+  lbl.textContent = _chaveRapidaAtiva
+    ? "Chave Rápida — liberada na assinatura"
+    : "Padrão — aguarda retorno do cartório";
+  lbl.style.color = _chaveRapidaAtiva ? "var(--info)" : "";
+}
+
+function abrirModalEmp(id, nome, construtora, unidades, chaveRapida, unidadeId) {
+  _editEmpId = id || null;
+  _chaveRapidaAtiva = chaveRapida || false;
+  document.getElementById("modal-emp-title").textContent = id ? `Editar — ${nome}` : "Novo Empreendimento";
+  document.getElementById("emp-nome").value     = nome || "";
+  document.getElementById("emp-const").value    = construtora || "";
+  document.getElementById("emp-unidades").value = unidades || "";
+  if (unidadeId) document.getElementById("sel-emp-unidade").value = unidadeId;
+  else if (document.getElementById("sel-emp-unidade")) document.getElementById("sel-emp-unidade").value = "";
+  const btn = document.getElementById("toggle-chave-rapida");
+  const lbl = document.getElementById("emp-chave-label");
+  btn.className = _chaveRapidaAtiva ? "toggle on" : "toggle";
+  lbl.textContent = _chaveRapidaAtiva ? "Chave Rápida — liberada na assinatura" : "Padrão — aguarda retorno do cartório";
+  lbl.style.color = _chaveRapidaAtiva ? "var(--info)" : "";
+  // Garante que os selects de unidade estão populados
+  loadFormSelects();
+  document.getElementById("modal-emp").classList.add("open");
+}
+
+async function salvarEmp() {
+  const nome = document.getElementById("emp-nome").value.trim();
+  if (!nome) { showToast("Nome do empreendimento obrigatório!", ""); return; }
+  const empUniId = parseInt(document.getElementById("sel-emp-unidade")?.value) || null;
+  const payload = {
+    nome,
+    construtora:    document.getElementById("emp-const").value.trim() || null,
+    total_unidades: parseInt(document.getElementById("emp-unidades").value) || 0,
+    chave_rapida:   _chaveRapidaAtiva,
+    unidade_id:     empUniId,
+  };
+  try {
+    if (_editEmpId) {
+      await apiFetch(`/empreendimentos/${_editEmpId}`, { method:"PUT", body: JSON.stringify(payload) });
+      showToast("Empreendimento atualizado!", "ok");
+    } else {
+      await apiFetch("/empreendimentos", { method:"POST", body: JSON.stringify(payload) });
+      showToast("Empreendimento cadastrado!", "ok");
+    }
+    closeModal("modal-emp");
+    loadEmpreendimentos();
+    loadFormSelects(); // atualiza dropdown e filtros rápidos
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+  }
+}
+
+async function desativarEmp(id, nome) {
+  if (!confirm(`Desativar "${nome}"? Ela não aparecerá mais nas listas.`)) return;
+  try {
+    await apiFetch(`/empreendimentos/${id}`, { method:"DELETE" });
+    showToast(`${nome} desativado.`, "ok");
+    loadEmpreendimentos();
+    loadFormSelects();
+  } catch(e) { showToast("Erro: " + e.message, ""); }
+}
+
+async function loadEmpreendimentos() {
+  try {
+    const uniId = document.getElementById("flt-emp-unidade")?.value || "";
+    const qs = uniId ? `?unidade_id=${uniId}` : "";
+    const data = await apiFetch(`/empreendimentos${qs}`);
+    const grid = document.getElementById("emp-grid");
+    if (!grid) return;
+    if (!data.length) {
+      grid.innerHTML = `<div style="padding:24px;color:var(--text-muted)">Nenhum empreendimento cadastrado.</div>`;
+      return;
+    }
+    const maxC = Math.max(...data.map(e => e.total_clientes), 1);
+    grid.innerHTML = data.map(e => {
+      const isJdF = e.chave_rapida;
+      const pct   = Math.round(e.total_clientes / maxC * 100);
+      const escapedNome  = e.nome.replace(/'/g, "\\'");
+      const escapedConst = (e.construtora||"").replace(/'/g, "\\'");
+      const unidadeTag = e.unidade_nome
+        ? `<div style="margin-top:4px;font-size:10px;color:var(--text-muted)">📍 ${e.unidade_nome} — ${e.unidade_cidade||""}</div>`
+        : "";
+      return `
+        <div class="emp-card ${isJdF?'jf':'std'}">
+          <div class="emp-card-top">
+            <div>
+              <div class="emp-nome">${e.nome}</div>
+              <div class="emp-const">${e.construtora || "Construtora não informada"}</div>
+              ${unidadeTag}
+            </div>
+            ${isJdF ? '<span class="badge-chave-rapida">🌸 Chave Rápida</span>' : ''}
+          </div>
+          <div class="emp-stats">
+            <div class="emp-stat">
+              <div class="lbl">Unidades</div>
+              <div class="val">${e.total_unidades} <small>unid.</small></div>
+            </div>
+            <div class="emp-stat">
+              <div class="lbl">Clientes</div>
+              <div class="val">${e.total_clientes} <small>registros</small></div>
+            </div>
+          </div>
+          <div style="height:5px;background:var(--bg);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${isJdF?'#3b82f6':'var(--primary-light)'};border-radius:99px;transition:width 0.6s"></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <button class="btn btn-outline btn-sm" style="flex:1"
+              onclick="abrirModalEmp(${e.id},'${escapedNome}','${escapedConst}',${e.total_unidades},${e.chave_rapida},${e.unidade_id||'null'})">
+              ✏️ Editar
+            </button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger)"
+              onclick="desativarEmp(${e.id},'${escapedNome}')">
+              Desativar
+            </button>
+          </div>
+        </div>`;
+    }).join("");
+  } catch(e) {
+    console.warn("API empreendimentos offline:", e.message);
+    document.getElementById("emp-grid").innerHTML =
+      `<div style="padding:20px;color:var(--text-muted)">Dados indisponíveis (API offline)</div>`;
+  }
+}
+
+// ── Corretores CRUD ───────────────────────────────────────────────
+let _editCorretorId = null;
+
+function abrirModalCorretor(id, nome, creci, tel) {
+  _editCorretorId = id || null;
+  document.getElementById("modal-corretor-title").textContent = id ? `Editar — ${nome}` : "Novo Corretor";
+  document.getElementById("cor-nome").value  = nome || "";
+  document.getElementById("cor-creci").value = creci || "";
+  document.getElementById("cor-tel").value   = tel || "";
+  document.getElementById("modal-corretor").classList.add("open");
+}
+
+async function salvarCorretor() {
+  const nome  = document.getElementById("cor-nome").value.trim();
+  const creci = document.getElementById("cor-creci").value.trim();
+  const tel   = document.getElementById("cor-tel").value.trim();
+  if (!nome) { showToast("Nome do corretor obrigatório!", ""); return; }
+  const payload = { nome, creci: creci||null, telefone: tel||null };
+  try {
+    if (_editCorretorId) {
+      await apiFetch(`/corretores/${_editCorretorId}`, { method:"PUT", body: JSON.stringify(payload) });
+      showToast("Corretor atualizado!", "ok");
+    } else {
+      await apiFetch("/corretores", { method:"POST", body: JSON.stringify(payload) });
+      showToast("Corretor cadastrado!", "ok");
+    }
+    closeModal("modal-corretor");
+    loadCorretores();
+    loadFormSelects(); // atualiza dropdown no modal de cliente
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+  }
+}
+
+async function desativarCorretor(id, nome) {
+  if (!confirm(`Desativar o corretor "${nome}"? Ele não aparecerá mais nas listas.`)) return;
+  try {
+    await apiFetch(`/corretores/${id}`, { method:"DELETE" });
+    showToast(`${nome} desativado.`, "ok");
+    loadCorretores();
+  } catch(e) { showToast("Erro: " + e.message, ""); }
+}
+
+async function loadCorretores() {
+  try {
+    const data = await apiFetch("/corretores");
+    const grid = document.getElementById("corretor-grid");
+    if (!grid) return;
+    if (!data.length) {
+      grid.innerHTML = `<div style="padding:24px;color:var(--text-muted)">Nenhum corretor cadastrado.</div>`;
+      return;
+    }
+    const cls = ["gold","silver","bronze","other","other","other","other","other"];
+    const max = data[0]?.total_vendas || 1;
+    grid.innerHTML = data.map((c, i) => {
+      const initials = c.nome.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
+      const pct = max > 0 ? Math.round(c.total_vendas / max * 100) : 0;
+      return `
+        <div class="cor-card">
+          <div class="cor-card-top">
+            <div class="cor-avatar" style="background:${i===0?'var(--warning)':i===1?'#94a3b8':i===2?'#cd7f32':'var(--primary-light)'}">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div class="cor-nome">${c.nome}</div>
+              <div class="cor-creci">CRECI: ${c.creci || "—"}</div>
+            </div>
+            <div class="rank-pos ${cls[i]||'other'}" style="width:26px;height:26px;font-size:12px">${i+1}</div>
+          </div>
+          <div class="cor-info">
+            <div><strong>${c.total_vendas}</strong> vendas</div>
+            ${c.telefone ? `<div>📱 ${c.telefone}</div>` : ""}
+          </div>
+          <div style="height:5px;background:var(--bg);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--primary-light);border-radius:99px;transition:width 0.6s"></div>
+          </div>
+          <div class="cor-actions">
+            <button class="btn btn-outline btn-sm" style="flex:1" onclick="abrirModalCorretor(${c.id},'${c.nome.replace(/'/g,"\'")}','${c.creci||""}','${c.telefone||""}')">✏️ Editar</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="desativarCorretor(${c.id},'${c.nome.replace(/'/g,"\'")}')">Desativar</button>
+          </div>
+        </div>`;
+    }).join("");
+  } catch(e) {
+    console.error("Erro ao carregar corretores:", e.message);
+    const el = document.getElementById("ranking-full");
+    if (el) el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-muted)">Erro ao carregar corretores.</div>`;
+  }
+}
+
+// ── Carrega comissões da API ──────────────────────────────────────
+function _getMesComissao() {
+  const selMes = document.getElementById("sel-mes-comissao");
+  if (selMes && !selMes.options.length) {
+    const hoje = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      const lbl = d.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+      const opt = new Option(lbl.charAt(0).toUpperCase()+lbl.slice(1), val);
+      if (i === 0) opt.selected = true;
+      selMes.add(opt);
+    }
+  }
+  return (selMes?.value || "").split("-");
+}
+
+async function loadComissoes() {
+  const [ano, mes] = _getMesComissao();
+  const qs = ano ? `?ano=${ano}&mes=${mes}` : "";
+  try {
+    const [data, lancamentos] = await Promise.all([
+      apiFetch(`/comissoes${qs}`),
+      apiFetch(`/comissoes/lancamentos${qs}`),
+    ]);
+
+    // ── Cards auto-calculados ──
+    const grid = document.getElementById("comissao-grid");
+    if (grid) {
+      grid.innerHTML = data.analistas.map(a => {
+        const pct  = Math.min(a.percentual_meta, 100);
+        const st   = a.status_meta;
+        const cor  = st==="superou"?"var(--info)":st==="ok"?"var(--success)":"var(--danger)";
+        const txtMeta = st==="superou"?"🏆 Superou a meta!":st==="ok"?"✓ Meta atingida":"↓ Abaixo da meta";
+        // lançamentos extras deste analista
+        const extras = lancamentos.filter(l => l.analista_id === a.analista_id);
+        const totalExtra = extras.reduce((s,l) => s + Number(l.valor), 0);
+        const totalGeral = Number(a.valor_acumulado) + totalExtra;
+        return `
+          <div class="comissao-card ${st}">
+            <div class="comissao-nome">${a.nome}</div>
+            <div class="comissao-sub">Meta: ${a.meta_mensal} casas/mês · R$ ${Number(a.comissao_por_casa).toFixed(2).replace(".",",")} / casa</div>
+            <div class="comissao-val">R$ ${totalGeral.toFixed(2).replace(".",",")}<small> total do mês</small></div>
+            <div style="font-size:11px;color:var(--text-muted);margin:2px 0 8px">
+              Assinaturas: R$ ${Number(a.valor_acumulado).toFixed(2).replace(".",",")}
+              ${totalExtra ? ` + Extras: R$ ${totalExtra.toFixed(2).replace(".",",")}` : ""}
+            </div>
+            <div class="comissao-meta">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                <span><strong>${a.casas_assinadas_mes}</strong> casas assinadas</span>
+                <span style="font-weight:700;color:${cor}">${a.percentual_meta.toFixed(0)}% da meta</span>
+              </div>
+              <div class="meta-track"><div class="meta-fill ${st}" style="width:${pct}%"></div></div>
+            </div>
+            <div style="margin-top:8px;font-size:11px;font-weight:600;color:${cor}">${txtMeta}</div>
+          </div>`;
+      }).join("");
+    }
+
+    // ── Resumo ──
+    const totalExtras = lancamentos.reduce((s,l) => s + Number(l.valor), 0);
+    const resumo = document.getElementById("comissao-resumo");
+    if (resumo) resumo.innerHTML = `
+      <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+        <div><div style="font-size:11px;color:var(--text-muted)">Mês</div><div style="font-size:16px;font-weight:700">${data.mes_referencia}</div></div>
+        <div><div style="font-size:11px;color:var(--text-muted)">Assinaturas</div><div style="font-size:20px;font-weight:800;color:var(--primary)">${data.total_assinaturas_mes}</div></div>
+        <div><div style="font-size:11px;color:var(--text-muted)">Comissões auto</div><div style="font-size:20px;font-weight:800;color:var(--success)">R$ ${Number(data.total_comissoes).toFixed(2).replace(".",",")}</div></div>
+        ${totalExtras ? `<div><div style="font-size:11px;color:var(--text-muted)">Lançamentos manuais</div><div style="font-size:20px;font-weight:800;color:var(--info)">R$ ${totalExtras.toFixed(2).replace(".",",")}</div></div>` : ""}
+        <div><div style="font-size:11px;color:var(--text-muted)">Total geral</div><div style="font-size:20px;font-weight:800;color:var(--warning)">R$ ${(Number(data.total_comissoes)+totalExtras).toFixed(2).replace(".",",")}</div></div>
+      </div>`;
+
+    // ── Lançamentos manuais ──
+    const ll = document.getElementById("lancamentos-lista");
+    if (ll) {
+      if (!lancamentos.length) {
+        ll.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">Nenhum lançamento manual neste mês.</div>`;
+      } else {
+        ll.innerHTML = `<table style="width:100%;border-collapse:collapse">
+          <thead><tr style="font-size:11px;color:var(--text-muted);text-transform:uppercase;border-bottom:1px solid var(--border)">
+            <th style="padding:8px 4px;text-align:left">Analista</th>
+            <th style="padding:8px 4px;text-align:left">Descrição</th>
+            <th style="padding:8px 4px;text-align:right">Valor</th>
+            <th style="padding:8px 4px;text-align:center">Status</th>
+            <th style="padding:8px 4px;text-align:center">Ações</th>
+          </tr></thead>
+          <tbody>${lancamentos.map(l => `
+            <tr style="border-bottom:1px solid var(--border);font-size:13px" id="lanc-row-${l.id}">
+              <td style="padding:10px 4px;font-weight:600">${l.analista_nome}</td>
+              <td style="padding:10px 4px;color:var(--text-muted)">${l.descricao}</td>
+              <td style="padding:10px 4px;text-align:right;font-weight:700;color:var(--success)">R$ ${Number(l.valor).toFixed(2).replace(".",",")}</td>
+              <td style="padding:10px 4px;text-align:center">
+                ${l.pago
+                  ? `<span style="font-size:11px;color:var(--success);font-weight:600">✓ Pago ${l.data_pagamento||""}</span>`
+                  : `<span style="font-size:11px;color:var(--warning);font-weight:600">⏳ Pendente</span>`}
+              </td>
+              <td style="padding:10px 4px;text-align:center">
+                <div style="display:flex;gap:4px;justify-content:center">
+                  ${!l.pago ? `<button class="btn btn-success btn-sm" onclick="pagarLancamento(${l.id},this)" title="Marcar como pago">✓ Pagar</button>` : ""}
+                  <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5" onclick="deletarLancamento(${l.id},this)" title="Excluir">🗑</button>
+                </div>
+              </td>
+            </tr>`).join("")}
+          </tbody></table>`;
+      }
+    }
+  } catch(e) {
+    console.warn("API comissoes offline:", e.message);
+    const grid = document.getElementById("comissao-grid");
+    if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-muted)">Dados indisponíveis (API offline)</div>`;
+  }
+}
+
+// ── Modal lançamento manual ────────────────────────────────────────
+async function abrirModalLancamento() {
+  // popula select de analistas
+  const sel = document.getElementById("lanc-analista");
+  if (sel && !sel.options.length) {
+    try {
+      const analistas = await apiFetch("/analistas");
+      sel.innerHTML = analistas.map(a => `<option value="${a.id}">${a.nome}</option>`).join("");
+    } catch(_) {}
+  }
+  // pré-preenche mês com o mês selecionado
+  const [ano, mes] = _getMesComissao();
+  if (ano) document.getElementById("lanc-data").value = `${ano}-${mes.padStart(2,"0")}`;
+  document.getElementById("lanc-descricao").value = "";
+  document.getElementById("lanc-valor").value = "";
+  openModal("modal-lancamento");
+}
+
+async function salvarLancamento() {
+  const analista_id = parseInt(document.getElementById("lanc-analista").value);
+  const descricao   = document.getElementById("lanc-descricao").value.trim();
+  const valor       = parseFloat(document.getElementById("lanc-valor").value);
+  const dataRef     = document.getElementById("lanc-data").value; // "2026-03"
+  if (!analista_id || !descricao || !valor || !dataRef) {
+    showToast("Preencha todos os campos!", ""); return;
+  }
+  const data_ref = `${dataRef}-01`; // primeiro dia do mês
+  try {
+    await apiFetch("/comissoes/lancamentos", {
+      method: "POST",
+      body: JSON.stringify({ analista_id, descricao, valor, data_ref }),
+    });
+    showToast("Lançamento salvo!", "ok");
+    closeModal("modal-lancamento");
+    loadComissoes();
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+  }
+}
+
+async function pagarLancamento(id, btn) {
+  try {
+    btn.disabled = true;
+    btn.textContent = "...";
+    await apiFetch(`/comissoes/lancamentos/${id}/pagar`, { method: "PUT" });
+    showToast("Marcado como pago!", "ok");
+    loadComissoes();
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+    btn.disabled = false;
+    btn.textContent = "✓ Pagar";
+  }
+}
+
+async function deletarLancamento(id, btn) {
+  if (!confirm("Excluir este lançamento?")) return;
+  try {
+    btn.disabled = true;
+    await apiFetch(`/comissoes/lancamentos/${id}`, { method: "DELETE" });
+    showToast("Lançamento removido.", "ok");
+    loadComissoes();
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+    btn.disabled = false;
+  }
+}
+
+// ── Liberar Chaves ────────────────────────────────────────────────
+let _chavesData = [];
+
+async function loadChaves() {
+  const apenas = document.getElementById("chk-apenas-pendentes")?.checked ? "true" : "false";
+  try {
+    _chavesData = await apiFetch(`/chaves?apenas_pendentes=${apenas}`);
+    const lista = document.getElementById("chaves-lista");
+    if (!lista) return;
+
+    // Summary counters
+    const aptos      = _chavesData.filter(c => c.status_chave === "apto").length;
+    const aguardando = _chavesData.filter(c => c.status_chave === "aguardando").length;
+    const liberadas  = _chavesData.filter(c => c.status_chave === "liberada").length;
+    const el = id => document.getElementById(id);
+    if (el("cs-apto"))      el("cs-apto").textContent      = aptos;
+    if (el("cs-aguardando"))el("cs-aguardando").textContent = aguardando;
+    if (el("cs-liberada"))  el("cs-liberada").textContent  = liberadas;
+
+    if (!_chavesData.length) {
+      lista.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted)">Nenhum cliente encontrado.</div>`;
+      return;
+    }
+
+    lista.innerHTML = _chavesData.map(c => {
+      const tipoChave = c.chave_rapida
+        ? `<span class="chave-badge-rapida">🌸 Chave Rápida</span>`
+        : `<span class="chave-badge-normal">📋 Aguarda Doc.</span>`;
+
+      let statusBadge, acaoBotao;
+      if (c.status_chave === "liberada") {
+        statusBadge = `<span class="badge-liberada">✓ Liberada ${c.data_chave_liberada||""}</span>`;
+        acaoBotao   = `<span style="font-size:11px;color:var(--success)">✓ Entregue</span>`;
+      } else if (c.status_chave === "apto") {
+        statusBadge = `<span class="badge-apto">🔑 Apto — Liberar Agora</span>`;
+        acaoBotao   = `<button class="btn btn-success btn-sm" onclick="liberarChave(${c.id}, this)">🔑 Liberar Chave</button>`;
+      } else {
+        const motivo = c.chave_rapida ? "" : "aguardando doc. cartório";
+        statusBadge = `<span class="badge-aguardando">⏳ Aguardando${motivo ? " — " + motivo : ""}</span>`;
+        acaoBotao   = `<button class="btn btn-outline btn-sm" disabled style="opacity:0.4" title="Aguardando doc. cartório">⏳ Pendente</button>`;
+      }
+
+      return `
+        <div class="chave-row chave-row-${c.status_chave}" data-id="${c.id}">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700">${c.nome}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
+              ${c.empreendimento} · Casa ${c.casa_num}
+              ${c.logradouro ? " · " + c.logradouro : ""}
+            </div>
+          </div>
+          <div style="text-align:center;min-width:70px">
+            <div style="font-size:10px;color:var(--text-muted)">Assinatura</div>
+            <div style="font-size:12px;font-weight:600">${c.data_assinatura||"—"}</div>
+          </div>
+          <div style="min-width:100px;text-align:center">${tipoChave}</div>
+          <div style="min-width:160px;text-align:center">${statusBadge}</div>
+          <div style="min-width:130px;text-align:right">${acaoBotao}</div>
+        </div>`;
+    }).join("");
+  } catch(e) {
+    console.warn("API chaves offline:", e.message);
+    document.getElementById("chaves-lista").innerHTML =
+      `<div style="padding:20px;color:var(--text-muted)">Dados indisponíveis (API offline)</div>`;
+  }
+}
+
+async function liberarChave(clienteId, btn) {
+  if (!confirm("Confirmar entrega da chave para este cliente?")) return;
+  try {
+    btn.disabled = true;
+    btn.textContent = "...";
+    await apiFetch(`/chaves/${clienteId}/liberar`, { method: "POST" });
+    showToast("Chave liberada com sucesso!", "ok");
+    loadChaves();
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+    btn.disabled = false;
+    btn.textContent = "🔑 Liberar Chave";
+  }
+}
+
+function gerarTextoChaves() {
+  const aptos = _chavesData.filter(c => c.status_chave === "apto");
+  if (!aptos.length) { showToast("Nenhum cliente apto para liberar chave",""); return; }
+  const rapidas = aptos.filter(c => c.chave_rapida);
+  const normais = aptos.filter(c => !c.chave_rapida);
+  let txt = "*Relatório Liberar Chaves*\n";
+  txt += `Data: ${new Date().toLocaleDateString("pt-BR")}\n\n`;
+  if (rapidas.length) {
+    txt += "*🌸 Jardim das Flores — CHAVE IMEDIATA:*\n";
+    rapidas.forEach(c => { txt += `• ${c.nome} · Casa ${c.casa_num}${c.logradouro?" · "+c.logradouro:""} · Ass: ${c.data_assinatura||"—"}\n`; });
+    txt += "\n";
+  }
+  if (normais.length) {
+    txt += "*Aptos (doc. cartório recebido):*\n";
+    normais.forEach(c => { txt += `• ${c.nome} · ${c.empreendimento} Casa ${c.casa_num} · Ass: ${c.data_assinatura||"—"}\n`; });
+  }
+  navigator.clipboard.writeText(txt)
+    .then(() => showToast("Copiado! Cole no WhatsApp do construtor.", "ok"))
+    .catch(() => showToast("Falha ao copiar.", ""));
+}
+
+// ── Excluir cliente (soft delete) ─────────────────────────────────
+async function excluirCliente(id, nome, btn) {
+  if (!confirm(`Mover "${nome}" para a lixeira?\n\nO ADM MASTER pode restaurar depois.`)) return;
+  try {
+    btn.disabled = true;
+    await apiFetch(`/clientes/${id}`, { method: "DELETE" });
+    showToast(`"${nome}" movido para a lixeira.`, "ok");
+    loadClientes();
+    loadDashboard();
+    _atualizarBadgeLixeira();
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+    btn.disabled = false;
+  }
+}
+
+// ── Lixeira — carregar e renderizar ──────────────────────────────
+async function loadLixeira() {
+  const lista = document.getElementById("lixeira-lista");
+  if (!lista) return;
+  try {
+    const data = await apiFetch("/clientes/lixeira");
+    if (!data.length) {
+      lista.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-muted)">
+        <div style="font-size:40px;margin-bottom:12px">🗑️</div>
+        <div style="font-weight:600">Lixeira vazia</div>
+        <div style="font-size:12px;margin-top:4px">Nenhum cliente foi removido</div>
+      </div>`;
+      return;
+    }
+    lista.innerHTML = data.map(c => {
+      const deletedAt = c.deleted_at ? new Date(c.deleted_at).toLocaleString("pt-BR") : "—";
+      const emp = c.empreendimento?.nome || "—";
+      return `
+        <div style="display:flex;align-items:center;gap:16px;padding:14px 16px;border:1px solid #fee2e2;border-radius:10px;background:#fff5f5">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;color:#dc2626">${c.nome}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
+              CPF: ${c.cpf} · ${emp} Casa ${c.casa_num} · N° ${c.num_ordem}
+            </div>
+          </div>
+          <div style="text-align:center;min-width:130px">
+            <div style="font-size:10px;color:var(--text-muted)">Removido em</div>
+            <div style="font-size:12px;font-weight:600">${deletedAt}</div>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="restaurarCliente(${c.id},'${c.nome.replace(/'/g,"\\'")}',this)">↩ Restaurar</button>
+        </div>`;
+    }).join("");
+  } catch(e) {
+    lista.innerHTML = `<div style="padding:20px;color:var(--text-muted)">Erro ao carregar lixeira: ${e.message}</div>`;
+  }
+}
+
+// ── Restaurar cliente ─────────────────────────────────────────────
+async function restaurarCliente(id, nome, btn) {
+  if (!confirm(`Restaurar "${nome}"?`)) return;
+  try {
+    btn.disabled = true;
+    btn.textContent = "...";
+    await apiFetch(`/clientes/${id}/restaurar`, { method: "POST" });
+    showToast(`"${nome}" restaurado com sucesso!`, "ok");
+    loadLixeira();
+    _atualizarBadgeLixeira();
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+    btn.disabled = false;
+    btn.textContent = "↩ Restaurar";
+  }
+}
+
+// ── Badge da lixeira na sidebar ───────────────────────────────────
+async function _atualizarBadgeLixeira() {
+  try {
+    const data = await apiFetch("/clientes/lixeira");
+    const badge = document.getElementById("lixeira-badge");
+    if (!badge) return;
+    if (data.length > 0) {
+      badge.textContent = data.length;
+      badge.style.display = "";
+    } else {
+      badge.style.display = "none";
+    }
+  } catch(_) {}
+}
+
+// ── Detalhe completo do cliente ───────────────────────────────────
+async function verCliente(id) {
+  try {
+    const c = await apiFetch(`/clientes/${id}`);
+    const emp = c.empreendimento || {};
+    const isJdF = emp.chave_rapida || false;
+
+    // ── Workflow premium ──────────────────────────────────────────
+    const WFKEYS  = ["engenharia","aprovacao","documentacao","siktd","cartorio","concluido"];
+    const WFLBLS  = ["Engenharia","Aprovação","Certidões","SIKTD","Cartório","Concluído"];
+    const WFICONS = ["🏗️","🏦","📋","💻","🏛️","🏆"];
+    const WFDESC  = [
+      "Laudo do engenheiro",
+      "Assinatura na Caixa · " + (c.data_assinatura || "pendente"),
+      "Certidões e pesquisas",
+      "Envio digital · " + (c.data_siktd_ok || "pendente"),
+      "Cartório · " + (c.data_cartorio_envio ? "enviado " + c.data_cartorio_envio : "aguardando envio"),
+      c.doc_recebido ? "Garantia recebida ✓" : "Aguardando retorno do cartório",
+    ];
+    const WFDATES = [null, c.data_assinatura, null, c.data_siktd_ok, c.data_cartorio_envio, c.data_doc_recebido];
+    const curIdx = WFKEYS.indexOf(c.workflow_step);
+    const pct = Math.round(((curIdx + (curIdx < 5 ? 0.5 : 1)) / 6) * 100);
+
+    const stepsHtml = WFKEYS.map((k,i) => {
+      const cls = i < curIdx ? "done" : i === curIdx ? "current" : "pending";
+      const icon = i < curIdx ? "✓" : WFICONS[i];
+      const dt = WFDATES[i]
+        ? `<div class="wf-premium-date">${WFDATES[i]}</div>`
+        : `<div class="wf-premium-date"></div>`;
+      return `<div class="wf-premium-step ${cls}">
+        <div class="wf-premium-circle">${icon}</div>
+        <div class="wf-premium-label">${WFLBLS[i]}</div>
+        ${dt}
+      </div>`;
+    }).join("");
+
+    const timelineHtml = `
+      <div class="wf-premium">
+        <div class="wf-premium-header">
+          <div class="wf-premium-bar">
+            <div class="wf-premium-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="wf-premium-pct">${pct}%</div>
+        </div>
+        <div class="wf-premium-steps">${stepsHtml}</div>
+        <div class="wf-current-card">
+          <div class="wci-icon">${WFICONS[curIdx]}</div>
+          <div>
+            <div class="wci-step">Etapa atual — ${curIdx + 1} de 6</div>
+            <div class="wci-title">${WFLBLS[curIdx]}</div>
+            <div class="wci-desc">${WFDESC[curIdx]}</div>
+          </div>
+        </div>
+      </div>`;
+
+    // ── Chave ─────────────────────────────────────────────────────
+    let statusChave = "aguardando";
+    if (c.chave_liberada) statusChave = "liberada";
+    else if (isJdF && c.data_assinatura) statusChave = "apto";
+    else if (!isJdF && c.doc_recebido) statusChave = "apto";
+
+    const chaveIconMap = { apto:"🔑", aguardando:"⏳", liberada:"✓" };
+    const chaveTxtMap  = {
+      apto:      "Apto para liberar agora",
+      aguardando: isJdF ? "Aguardando assinatura" : "Aguardando doc. do cartório",
+      liberada:  `Chave entregue em ${c.data_chave_liberada || "—"}`,
+    };
+    const chaveBtnHtml = statusChave === "apto"
+      ? `<button class="btn btn-success" onclick="liberarChaveDetalhe(${c.id})">🔑 Liberar Chave</button>`
+      : statusChave === "liberada"
+      ? `<span class="tag verde" style="font-size:12px;padding:5px 12px">✓ Entregue</span>`
+      : `<span class="tag amarelo" style="font-size:12px;padding:5px 12px">⏳ Pendente</span>`;
+
+    // ── Comissão ──────────────────────────────────────────────────
+    let comissaoHtml = "";
+    if (c.data_assinatura && c.analista && _currentUser?.tipo === "admin") {
+      const comissaoUnit = Number(c.analista.comissao_por_casa || 80);
+      const concluido = c.workflow_step === "concluido";
+      comissaoHtml = `
+        <div class="det-section">
+          <div class="det-section-title">💰 Comissão Gerada</div>
+          <div class="det-comissao-box">
+            <div style="text-align:center;min-width:90px">
+              <div style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px">Valor</div>
+              <div style="font-size:30px;font-weight:900;color:var(--success);line-height:1">R$&nbsp;${comissaoUnit.toFixed(2).replace(".",",")}</div>
+            </div>
+            <div style="flex:1;border-left:2px solid #bbf7d0;padding-left:16px">
+              <div style="font-size:13px;font-weight:700;color:var(--primary)">Analista: ${c.analista.nome}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Assinatura em ${c.data_assinatura} · R$ ${comissaoUnit.toFixed(2).replace(".",",")} por casa</div>
+              ${concluido
+                ? `<div style="margin-top:6px;display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#166534;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700">🏆 Processo concluído</div>`
+                : `<div style="margin-top:6px;font-size:11px;color:var(--text-muted)">Em andamento — etapa ${curIdx + 1}/6</div>`}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Financeiro ────────────────────────────────────────────────
+    const fmtR = v => v ? `R$ ${Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2})}` : "—";
+
+    // ── Corpo ─────────────────────────────────────────────────────
+    const corpo = `
+      <div class="det-section">
+        <div class="det-section-title">📋 Identificação</div>
+        <div class="det-grid">
+          <div class="det-field"><div class="det-field-label">Nº Ordem</div><div class="det-field-val">${c.num_ordem}</div></div>
+          <div class="det-field"><div class="det-field-label">Empreendimento</div><div class="det-field-val" style="color:var(--primary)">${emp.nome||"—"}</div></div>
+          <div class="det-field"><div class="det-field-label">Casa</div><div class="det-field-val">${c.casa_num}</div></div>
+          ${c.quadra ? `<div class="det-field"><div class="det-field-label">Quadra / Lote</div><div class="det-field-val">Q.${c.quadra} / L.${c.lote||"—"}</div></div>` : ""}
+          ${c.logradouro ? `<div class="det-field" style="grid-column:span 2"><div class="det-field-label">Logradouro</div><div class="det-field-val" style="color:#1d4ed8">${c.logradouro}</div></div>` : ""}
+          <div class="det-field"><div class="det-field-label">Corretor</div><div class="det-field-val">${c.corretor?.nome||"—"}</div></div>
+          <div class="det-field"><div class="det-field-label">Analista</div><div class="det-field-val">${c.analista?.nome||"—"}</div></div>
+          <div class="det-field"><div class="det-field-label">CPF</div><div class="det-field-val" style="font-family:monospace;font-size:12px">${c.cpf}</div></div>
+          <div class="det-field"><div class="det-field-label">Telefone</div><div class="det-field-val">${c.telefone||"—"}</div></div>
+        </div>
+      </div>
+
+      <div class="det-section">
+        <div class="det-section-title">🔄 Processo — Workflow</div>
+        ${timelineHtml}
+      </div>
+
+      <div class="det-section">
+        <div class="det-section-title">💵 Financeiro</div>
+        <div class="det-grid">
+          <div class="det-field" style="border:2px solid #bfdbfe">
+            <div class="det-field-label">Seg. RCPM</div>
+            <div class="det-field-val" style="color:var(--primary);font-size:15px">${fmtR(c.valor_rcpm)}</div>
+          </div>
+          <div class="det-field">
+            <div class="det-field-label">Avaliação</div>
+            <div class="det-field-val">${fmtR(c.valor_avaliacao)}</div>
+          </div>
+          <div class="det-field">
+            <div class="det-field-label">Valor de Venda</div>
+            <div class="det-field-val">${fmtR(c.valor_venda)}</div>
+          </div>
+          <div class="det-field">
+            <div class="det-field-label">Assinatura</div>
+            <div class="det-field-val">${c.data_assinatura||"—"}</div>
+          </div>
+          <div class="det-field">
+            <div class="det-field-label">Chegada Cartório</div>
+            <div class="det-field-val">${c.chegada_cartorio||"—"}</div>
+          </div>
+          <div class="det-field">
+            <div class="det-field-label">Doc. Recebido</div>
+            <div class="det-field-val">${c.doc_recebido ? `<span style="color:var(--success)">✓ ${c.data_doc_recebido||""}</span>` : '<span style="color:var(--warning)">⏳ Pendente</span>'}</div>
+          </div>
+        </div>
+      </div>
+
+      ${comissaoHtml}
+
+      <div class="det-section">
+        <div class="det-section-title">🔑 Entrega da Chave</div>
+        <div class="det-chave-box ${statusChave}">
+          <div>
+            <div style="font-size:22px;margin-bottom:4px">${chaveIconMap[statusChave]}</div>
+            <div style="font-size:14px;font-weight:800;color:var(--primary)">${chaveTxtMap[statusChave]}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+              ${isJdF ? "🌸 Jardim das Flores — chave na assinatura" : "Aguarda doc. do cartório para liberação"}
+            </div>
+          </div>
+          ${chaveBtnHtml}
+        </div>
+      </div>
+
+      ${c.observacoes ? `
+      <div class="det-section">
+        <div class="det-section-title">📝 Observações</div>
+        <div style="background:var(--bg);border-radius:10px;padding:14px;font-size:13px;color:var(--text);line-height:1.6">${c.observacoes}</div>
+      </div>` : ""}
+    `;
+
+    // ── Avatar com iniciais ────────────────────────────────────────
+    const initials = c.nome.split(" ").filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("");
+    document.getElementById("det-avatar").textContent = initials;
+
+    // ── WF tag no header ──────────────────────────────────────────
+    const wfColors = ["#3730a3","#92400e","#075985","#5b21b6","#9a3412","#166534"];
+    const wfBgs    = ["#e0e7ff","#fef3c7","#e0f2fe","#ede9fe","#ffedd5","#dcfce7"];
+    const wfTag = document.getElementById("det-wf-tag");
+    if (wfTag) wfTag.innerHTML = `<span style="background:${wfBgs[curIdx]};color:${wfColors[curIdx]};padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700">${WFICONS[curIdx]} ${WFLBLS[curIdx]}</span>`;
+
+    document.getElementById("det-titulo").textContent = c.nome;
+    document.getElementById("det-sub").textContent = `${emp.nome||""} · Casa ${c.casa_num} · Nº ${c.num_ordem}`;
+    document.getElementById("det-btn-editar").onclick = () => { closeModal("modal-detalhe"); editarCliente(id); };
+    document.getElementById("det-corpo").innerHTML = corpo;
+    openModal("modal-detalhe");
+  } catch(e) {
+    showToast("Erro ao carregar detalhes: " + e.message, "");
+  }
+}
+
+async function liberarChaveDetalhe(clienteId) {
+  if (!confirm("Confirmar entrega da chave para este cliente?")) return;
+  try {
+    await apiFetch(`/chaves/${clienteId}/liberar`, { method: "POST" });
+    showToast("Chave liberada!", "ok");
+    closeModal("modal-detalhe");
+    loadClientes();
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+  }
+}
+
+// ── Workflow Picker ───────────────────────────────────────────────
+const WF_PICKER_DEFS = [
+  { key:"engenharia",   icon:"🏗️", label:"Engenharia",  desc:"Laudo do engenheiro" },
+  { key:"aprovacao",    icon:"🏦", label:"Aprovação",   desc:"Assinatura na agência Caixa" },
+  { key:"documentacao", icon:"📋", label:"Certidões",   desc:"Certidões e pesquisas" },
+  { key:"siktd",        icon:"💻", label:"SIKTD",       desc:"Envio digital no sistema Caixa" },
+  { key:"cartorio",     icon:"🏛️", label:"Cartório",    desc:"Autenticação física — 20 a 30 dias" },
+  { key:"concluido",    icon:"🏆", label:"Concluído",   desc:"Garantia recebida, crédito liberado" },
+];
+
+function _renderWfPicker(selectedKey) {
+  const picker = document.getElementById("wf-picker");
+  const info   = document.getElementById("wf-picker-info");
+  if (!picker) return;
+  const curIdx = WF_PICKER_DEFS.findIndex(d => d.key === selectedKey);
+  picker.innerHTML = WF_PICKER_DEFS.map((d, i) => {
+    const cls  = i < curIdx ? "done" : i === curIdx ? "current" : "";
+    const icon = i < curIdx ? "✓" : d.icon;
+    return `<div class="wf-picker-step ${cls}" onclick="_setWfStep('${d.key}')">
+      <div class="wf-picker-circle">${icon}</div>
+      <div class="wf-picker-label">${d.label}</div>
+    </div>`;
+  }).join("");
+  const def = WF_PICKER_DEFS[curIdx >= 0 ? curIdx : 0];
+  if (info) info.innerHTML = `<span>${def.icon}</span><span><strong>${def.label}</strong> — ${def.desc}</span>`;
+  document.getElementById("f-workflow-step").value = selectedKey;
+}
+
+function _setWfStep(key) {
+  _renderWfPicker(key);
+}
+
+// ── Unidades CRUD ─────────────────────────────────────────────────
+let _editUnidadeId = null;
+
+function abrirModalUnidade(id, nome, cidade, estado) {
+  _editUnidadeId = id || null;
+  document.getElementById("modal-unidade-title").textContent = id ? `Editar — ${nome}` : "Nova Unidade";
+  document.getElementById("uni-nome").value   = nome   || "";
+  document.getElementById("uni-cidade").value = cidade || "";
+  document.getElementById("uni-estado").value = estado || "";
+  document.getElementById("modal-unidade").classList.add("open");
+}
+
+async function salvarUnidade() {
+  const nome   = document.getElementById("uni-nome").value.trim();
+  const cidade = document.getElementById("uni-cidade").value.trim();
+  const estado = document.getElementById("uni-estado").value.trim().toUpperCase();
+  if (!nome || !cidade || !estado) { showToast("Preencha nome, cidade e estado!", ""); return; }
+  if (estado.length !== 2) { showToast("Estado deve ser a UF com 2 letras (ex: AM, RS)", ""); return; }
+  const payload = { nome, cidade, estado };
+  try {
+    if (_editUnidadeId) {
+      await apiFetch(`/unidades/${_editUnidadeId}`, { method:"PUT", body: JSON.stringify(payload) });
+      showToast("Unidade atualizada!", "ok");
+    } else {
+      await apiFetch("/unidades", { method:"POST", body: JSON.stringify(payload) });
+      showToast("Unidade cadastrada!", "ok");
+    }
+    closeModal("modal-unidade");
+    loadUnidades();
+    loadFormSelects();
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+  }
+}
+
+async function desativarUnidade(id, nome) {
+  if (!confirm(`Desativar a unidade "${nome}"?\nOs empreendimentos vinculados não serão afetados.`)) return;
+  try {
+    await apiFetch(`/unidades/${id}`, { method:"DELETE" });
+    showToast(`${nome} desativada.`, "ok");
+    loadUnidades();
+    loadFormSelects();
+  } catch(e) { showToast("Erro: " + e.message, ""); }
+}
+
+async function loadUnidades() {
+  try {
+    const data = await apiFetch("/unidades");
+    _unidadesCache = data;
+    const grid = document.getElementById("unidade-grid");
+    if (!grid) return;
+    if (!data.length) {
+      grid.innerHTML = `<div style="padding:24px;color:var(--text-muted)">
+        <div style="font-size:32px;margin-bottom:10px">🏙️</div>
+        <div style="font-weight:600">Nenhuma unidade cadastrada</div>
+        <div style="font-size:12px;margin-top:4px">Clique em "+ Nova Unidade" para adicionar a primeira filial</div>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = data.map(u => {
+      const escNome = u.nome.replace(/'/g, "\\'");
+      const escCid  = u.cidade.replace(/'/g, "\\'");
+      return `
+        <div class="unidade-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+            <div>
+              <div class="unidade-nome">${u.nome}</div>
+              <div class="unidade-cidade">📍 ${u.cidade} — ${u.estado}</div>
+            </div>
+            <span class="tag verde">Ativa</span>
+          </div>
+          <div class="unidade-stats">
+            <div class="unidade-stat">
+              <div class="lbl">Empreendimentos</div>
+              <div class="val">${u.total_empreendimentos}</div>
+            </div>
+            <div class="unidade-stat">
+              <div class="lbl">Clientes</div>
+              <div class="val">${u.total_clientes}</div>
+            </div>
+          </div>
+          <div style="height:5px;background:var(--bg);border-radius:99px;overflow:hidden;margin-bottom:12px">
+            <div style="height:100%;width:${u.total_clientes > 0 ? 100 : 0}%;background:var(--primary-light);border-radius:99px;transition:width 0.6s"></div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm" style="flex:1"
+              onclick="abrirModalUnidade(${u.id},'${escNome}','${escCid}','${u.estado}')">
+              ✏️ Editar
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="filtrarPorUnidade(${u.id})" title="Ver empreendimentos desta unidade">
+              🏘️ Ver Empreend.
+            </button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger)"
+              onclick="desativarUnidade(${u.id},'${escNome}')">
+              Desativar
+            </button>
+          </div>
+        </div>`;
+    }).join("");
+  } catch(e) {
+    console.error("Erro ao carregar unidades:", e.message);
+    const grid = document.getElementById("unidade-grid");
+    if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-muted)">Erro ao carregar unidades.</div>`;
+  }
+}
+
+// Atalho: clica em "Ver Empreend." numa unidade, vai pra empreendimentos filtrado
+function filtrarPorUnidade(unidadeId) {
+  nav("empreendimentos");
+  setTimeout(() => {
+    const sel = document.getElementById("flt-emp-unidade");
+    if (sel) { sel.value = unidadeId; loadEmpreendimentos(); }
+  }, 100);
+}
+
+// ================================================================
+//  CONFIGURAÇÕES — GESTÃO DE USUÁRIOS
+// ================================================================
+
+let _editUserId = null;
+let _resetUserId = null;
+
+// Força de senha: retorna 0-4
+function _pwScore(pw) {
+  let score = 0;
+  if (pw.length >= 6)  score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  return Math.min(score, 4);
+}
+
+function _renderStrength(barId, labelId, pw) {
+  const score = _pwScore(pw);
+  const colors = ["#ef4444","#f59e0b","#eab308","#22c55e","#16a34a"];
+  const labels = ["","Fraca","Razoável","Boa","Forte"];
+  const widths = ["0%","25%","50%","75%","100%"];
+  const bar = document.getElementById(barId);
+  if (bar) { bar.style.width = pw ? widths[score] : "0%"; bar.style.background = colors[score]; }
+  const lbl = document.getElementById(labelId);
+  if (lbl) lbl.textContent = pw && score < 4 ? labels[score] : (pw ? "✓ " + labels[score] : "");
+}
+
+function _checkPwStrength() {
+  _renderStrength("pw-strength-bar", "pw-strength-label", document.getElementById("uf-senha").value);
+}
+function _checkResetStrength() {
+  _renderStrength("rf-strength-bar", null, document.getElementById("rf-senha").value);
+}
+
+async function loadUsuarios() {
+  const lista = document.getElementById("cfg-usuarios-lista");
+  if (!lista) return;
+  lista.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted)">Carregando...</div>`;
+  try {
+    const usuarios = await apiFetch("/auth/usuarios");
+    document.getElementById("cfg-usuarios-count").textContent = usuarios.length;
+    if (!usuarios.length) {
+      lista.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted)">Nenhum usuário encontrado.</div>`;
+      return;
+    }
+    lista.innerHTML = usuarios.map(u => {
+      const isSelf = _currentUser && _currentUser.id === u.id;
+      const initials = u.nome.trim().split(/\s+/).map(p => p[0]).join("").toUpperCase().slice(0,2);
+      const avatarCls = u.tipo === "admin" ? "cfg-avatar-admin" : "cfg-avatar-operador";
+      const roleCls   = u.tipo === "admin" ? "cfg-role-admin"   : "cfg-role-operador";
+      const roleLabel = u.tipo === "admin" ? "Admin" : "Operador";
+      const criadoEm  = u.created_at
+        ? new Date(u.created_at).toLocaleDateString("pt-BR", {day:"2-digit",month:"short",year:"numeric"})
+        : "–";
+      return `
+        <div class="cfg-user-card">
+          <div class="cfg-avatar-lg ${avatarCls}">${initials}</div>
+          <div class="cfg-user-info">
+            <div class="cfg-user-nome">
+              ${u.nome}
+              ${isSelf ? '<span class="cfg-self-badge">Você</span>' : ""}
+            </div>
+            <div class="cfg-user-email">${u.email}</div>
+            <div class="cfg-user-meta">
+              <span class="cfg-role-badge ${roleCls}">${roleLabel}</span>
+              <span style="margin-left:8px">📅 ${criadoEm}</span>
+            </div>
+          </div>
+          <div class="cfg-actions">
+            <button class="btn btn-outline btn-sm" title="Editar usuário"
+              onclick="abrirModalUsuario(${u.id},'${u.nome.replace(/'/g,"\\'")}','${u.email}','${u.tipo}')">
+              ✏️
+            </button>
+            <button class="btn btn-outline btn-sm" title="Redefinir senha"
+              onclick="abrirResetSenha(${u.id},'${u.nome.replace(/'/g,"\\'")}')">
+              🔑
+            </button>
+            ${isSelf ? "" : `
+            <button class="btn btn-outline btn-sm" style="color:var(--danger)" title="Desativar usuário"
+              onclick="desativarUsuario(${u.id},'${u.nome.replace(/'/g,"\\'")}')">
+              🗑️
+            </button>`}
+          </div>
+        </div>`;
+    }).join("");
+  } catch(e) {
+    lista.innerHTML = `<div style="padding:24px;text-align:center;color:var(--danger)">Erro ao carregar usuários.</div>`;
+  }
+}
+
+function abrirModalUsuario(id, nome, email, tipo) {
+  _editUserId = id || null;
+  document.getElementById("modal-usuario-titulo").textContent = id ? "Editar Usuário" : "Novo Usuário";
+  document.getElementById("uf-nome").value  = nome  || "";
+  document.getElementById("uf-email").value = email || "";
+  document.getElementById("uf-tipo").value  = tipo  || "operador";
+  document.getElementById("uf-senha").value = "";
+  document.getElementById("uf-senha-conf").value = "";
+  document.getElementById("pw-strength-bar").style.width = "0%";
+  document.getElementById("pw-strength-label").textContent = "";
+  document.getElementById("uf-tipo-aviso").style.display = "none";
+
+  // Na edição não mostra o campo de senha (usa modal de reset separado)
+  document.getElementById("uf-senha-section").style.display = id ? "none" : "block";
+
+  // Aviso ao selecionar admin
+  document.getElementById("uf-tipo").onchange = function() {
+    document.getElementById("uf-tipo-aviso").style.display = this.value === "admin" ? "block" : "none";
+  };
+
+  // Proteção: se editando o próprio usuário, desabilita mudança de role
+  const isSelf = _currentUser && _currentUser.id === id;
+  const tipoEl = document.getElementById("uf-tipo");
+  tipoEl.disabled = isSelf;
+  if (isSelf) {
+    tipoEl.title = "Você não pode alterar seu próprio nível de acesso";
+  }
+
+  document.getElementById("modal-usuario").classList.add("open");
+}
+
+async function salvarUsuario() {
+  const nome  = document.getElementById("uf-nome").value.trim();
+  const email = document.getElementById("uf-email").value.trim();
+  const tipo  = document.getElementById("uf-tipo").value;
+  if (!nome || !email) { showToast("Preencha nome e email", "error"); return; }
+
+  if (!_editUserId) {
+    // Criação: valida senha
+    const senha = document.getElementById("uf-senha").value;
+    const conf  = document.getElementById("uf-senha-conf").value;
+    if (senha.length < 6) { showToast("Senha deve ter ao menos 6 caracteres", "error"); return; }
+    if (senha !== conf)   { showToast("As senhas não coincidem", "error"); return; }
+    try {
+      await apiFetch("/auth/usuarios", { method:"POST", body:JSON.stringify({nome,email,senha,tipo}) });
+      showToast("Usuário criado com sucesso");
+    } catch(e) { showToast(e.message || "Erro ao criar usuário", "error"); return; }
+  } else {
+    // Edição: atualiza nome/email/role
+    const tipoEl = document.getElementById("uf-tipo");
+    const payload = { nome, email };
+    if (!tipoEl.disabled) payload.tipo = tipo;
+    try {
+      await apiFetch(`/auth/usuarios/${_editUserId}`, { method:"PUT", body:JSON.stringify(payload) });
+      showToast("Usuário atualizado");
+      // Atualiza dados locais se editando o próprio usuário
+      if (_currentUser && _currentUser.id === _editUserId) {
+        _currentUser.nome  = nome;
+        _currentUser.email = email;
+        localStorage.setItem("imv_user", JSON.stringify(_currentUser));
+        _applyUserSession(_currentUser);
+      }
+    } catch(e) { showToast(e.message || "Erro ao atualizar", "error"); return; }
+  }
+
+  closeModal("modal-usuario");
+  loadUsuarios();
+}
+
+function abrirResetSenha(userId, nome) {
+  _resetUserId = userId;
+  document.getElementById("reset-user-nome").textContent = nome;
+  document.getElementById("rf-senha").value = "";
+  document.getElementById("rf-senha-conf").value = "";
+  document.getElementById("rf-strength-bar").style.width = "0%";
+  document.getElementById("modal-reset-senha").classList.add("open");
+}
+
+async function confirmarResetSenha() {
+  const senha = document.getElementById("rf-senha").value;
+  const conf  = document.getElementById("rf-senha-conf").value;
+  if (senha.length < 6) { showToast("Senha deve ter ao menos 6 caracteres", "error"); return; }
+  if (senha !== conf)   { showToast("As senhas não coincidem", "error"); return; }
+  try {
+    await apiFetch(`/auth/usuarios/${_resetUserId}/senha`, {
+      method:"PUT", body:JSON.stringify({ senha_nova: senha }),
+    });
+    showToast("Senha redefinida com sucesso");
+    closeModal("modal-reset-senha");
+  } catch(e) { showToast(e.message || "Erro ao redefinir senha", "error"); }
+}
+
+async function desativarUsuario(userId, nome) {
+  if (!confirm(`Desativar o usuário "${nome}"? Ele perderá o acesso ao sistema.`)) return;
+  try {
+    await apiFetch(`/auth/usuarios/${userId}`, { method:"DELETE" });
+    showToast(`Usuário ${nome} desativado`);
+    loadUsuarios();
+  } catch(e) { showToast(e.message || "Erro ao desativar", "error"); }
+}
+
+// ================================================================
+//  SISTEMA DE AUTENTICAÇÃO
+// ================================================================
+
+function _showLoginScreen() {
+  document.getElementById("login-overlay").style.display = "flex";
+  // Limpa o formulário
+  document.getElementById("login-email").value = "";
+  document.getElementById("login-senha").value = "";
+  document.getElementById("login-error").style.display = "none";
+  document.getElementById("login-btn").disabled = false;
+  document.getElementById("login-btn").textContent = "Entrar";
+}
+
+function _hideLoginScreen() {
+  document.getElementById("login-overlay").style.display = "none";
+}
+
+function _clearAuthState() {
+  localStorage.removeItem("imv_token");
+  localStorage.removeItem("imv_user");
+  _currentUser = null;
+  document.body.classList.remove("is-admin");
+}
+
+function _applyUserSession(user) {
+  _currentUser = user;
+  localStorage.setItem("imv_user", JSON.stringify(user));
+
+  // Atualiza sidebar
+  const initials = user.nome.trim().split(/\s+/).map(p => p[0]).join("").toUpperCase().slice(0, 2);
+  document.getElementById("sidebar-user-avatar").textContent = initials;
+  document.getElementById("sidebar-user-name").textContent = user.nome;
+  document.getElementById("sidebar-user-role").textContent =
+    user.tipo === "admin" ? "Administrador" : "Operador";
+
+  // Aplica classe de role — mostra/oculta seções admin
+  if (user.tipo === "admin") {
+    document.body.classList.add("is-admin");
+  } else {
+    document.body.classList.remove("is-admin");
+  }
+
+  _hideLoginScreen();
+  loadDashboard();
+  _atualizarBadgeLixeira();
+}
+
+async function doLogin(event) {
+  event.preventDefault();
+  const btn   = document.getElementById("login-btn");
+  const errEl = document.getElementById("login-error");
+  const email = document.getElementById("login-email").value.trim();
+  const senha = document.getElementById("login-senha").value;
+
+  btn.disabled = true;
+  btn.textContent = "Entrando…";
+  errEl.style.display = "none";
+
+  try {
+    const res = await fetch(API_BASE + "/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, senha }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Email ou senha incorretos");
+    }
+
+    const data = await res.json();
+    localStorage.setItem("imv_token", data.access_token);
+    _applyUserSession(data.usuario);
+
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = "block";
+    btn.disabled = false;
+    btn.textContent = "Entrar";
+  }
+}
+
+function doLogout() {
+  if (!confirm("Deseja sair do sistema?")) return;
+  _clearAuthState();
+  // Volta para dashboard para próximo login
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  const dash = document.getElementById("page-dashboard");
+  if (dash) dash.classList.add("active");
+  _showLoginScreen();
+}
+
+// ── Inicialização ─────────────────────────────────────────────────
+async function initAuth() {
+  const token   = localStorage.getItem("imv_token");
+  const userStr = localStorage.getItem("imv_user");
+
+  if (!token || !userStr) {
+    _showLoginScreen();
+    return;
+  }
+
+  // Aplica sessão do cache imediatamente (UX responsivo)
+  try {
+    const cachedUser = JSON.parse(userStr);
+    _applyUserSession(cachedUser);
+  } catch {
+    _clearAuthState();
+    _showLoginScreen();
+    return;
+  }
+
+  // Valida token no servidor em background
+  fetch(API_BASE + "/auth/me", {
+    headers: { "Authorization": `Bearer ${token}` },
+  }).then(r => {
+    if (!r.ok) {
+      _clearAuthState();
+      _showLoginScreen();
+    } else {
+      return r.json().then(u => _applyUserSession(u));
+    }
+  }).catch(() => {
+    // Sem conexão — mantém sessão do cache, erros de API serão tratados pelo apiFetch
+  });
+}
+
+initAuth();
+</script>
+</body>
+</html>
