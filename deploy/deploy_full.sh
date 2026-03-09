@@ -30,7 +30,7 @@ echo ""
 # ── dependências ──────────────────────────────────────────────
 info "Instalando dependências do sistema..."
 apt-get update -qq
-apt-get install -y -qq nginx python3 python3-venv python3-pip postgresql postgresql-contrib libpq-dev ufw
+apt-get install -y -qq nginx python3 python3-venv python3-pip postgresql postgresql-contrib libpq-dev ufw fail2ban
 log "Dependências instaladas"
 
 # ── PostgreSQL ─────────────────────────────────────────────────
@@ -158,24 +158,58 @@ systemctl is-active --quiet imv-erp && log "Serviço FastAPI ativo" || \
   { echo ""; journalctl -u imv-erp -n 20 --no-pager; err "Serviço não iniciou"; }
 
 # ── Nginx ──────────────────────────────────────────────────────
-info "Configurando Nginx..."
+info "Configurando Nginx com headers de segurança e rate limiting..."
+
+# Desabilita tokens de versão do servidor
+sed -i 's/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf || \
+  grep -q "server_tokens off" /etc/nginx/nginx.conf || \
+  sed -i '/http {/a \    server_tokens off;' /etc/nginx/nginx.conf
+
 cat > /etc/nginx/sites-available/imv-erp << NGINXEOF
+# Zona de rate limiting: max 20 req/s por IP (burst 50)
+limit_req_zone \$binary_remote_addr zone=geral:10m rate=20r/s;
+# Zona mais restrita para o endpoint de login
+limit_req_zone \$binary_remote_addr zone=login:10m rate=5r/m;
+
 server {
     listen 80;
     listen [::]:80;
-    server_name ${LOCAL_IP} _;
+    server_name _;
 
     root ${APP_STATIC};
     index index.html;
 
     access_log /var/log/nginx/imv-erp-access.log;
-    error_log  /var/log/nginx/imv-erp-error.log;
+    error_log  /var/log/nginx/imv-erp-error.log warn;
 
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
+    # ── Security Headers ─────────────────────────────────────────
+    add_header X-Frame-Options            "SAMEORIGIN"              always;
+    add_header X-Content-Type-Options     "nosniff"                 always;
+    add_header X-XSS-Protection           "1; mode=block"           always;
+    add_header Referrer-Policy            "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy         "geolocation=(), camera=(), microphone=()" always;
+    add_header Content-Security-Policy    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;" always;
 
-    # Proxy para o FastAPI
+    # Bloqueia acesso a arquivos ocultos (.env, .git, etc)
+    location ~ /\. { deny all; return 404; }
+
+    # ── Login: rate limit rígido (brute-force) ────────────────────
+    location = /api/auth/login {
+        limit_req zone=login burst=3 nodelay;
+        limit_req_status 429;
+
+        proxy_pass         http://127.0.0.1:8000;
+        proxy_set_header   Host \$host;
+        proxy_set_header   X-Real-IP \$remote_addr;
+        proxy_set_header   X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_read_timeout 30s;
+    }
+
+    # ── API geral ─────────────────────────────────────────────────
     location /api/ {
+        limit_req zone=geral burst=50 nodelay;
+        limit_req_status 429;
+
         proxy_pass         http://127.0.0.1:8000;
         proxy_set_header   Host \$host;
         proxy_set_header   X-Real-IP \$remote_addr;
@@ -184,12 +218,11 @@ server {
         client_max_body_size 20M;
     }
 
-    # Frontend estático
+    # ── Frontend estático ─────────────────────────────────────────
     location / {
+        limit_req zone=geral burst=30 nodelay;
         try_files \$uri \$uri/ /index.html;
     }
-
-    location ~ /\. { deny all; }
 }
 NGINXEOF
 
@@ -200,10 +233,40 @@ systemctl enable nginx -q
 systemctl restart nginx
 log "Nginx configurado e reiniciado"
 
-# ── firewall ───────────────────────────────────────────────────
-ufw allow 'Nginx HTTP' -q 2>/dev/null || ufw allow 80/tcp -q
-ufw --force enable -q 2>/dev/null || true
-log "Firewall configurado"
+# ── Firewall (UFW estrito) ─────────────────────────────────────
+info "Configurando firewall UFW (SSH + HTTP + HTTPS)..."
+ufw --force reset -q
+ufw default deny incoming  -q
+ufw default allow outgoing -q
+ufw allow 22/tcp   -q   # SSH — NUNCA feche isso antes de habilitar
+ufw allow 80/tcp   -q   # HTTP
+ufw allow 443/tcp  -q   # HTTPS (Let's Encrypt)
+ufw --force enable -q
+log "Firewall configurado (somente portas 22, 80, 443)"
+
+# ── Fail2Ban — bloqueia IPs com muitas tentativas de login ─────
+info "Configurando fail2ban..."
+cat > /etc/fail2ban/jail.d/imv-erp.conf << 'F2BEOF'
+[nginx-http-auth]
+enabled  = true
+port     = http,https
+logpath  = /var/log/nginx/imv-erp-error.log
+maxretry = 10
+bantime  = 3600
+findtime = 600
+
+[nginx-limit-req]
+enabled  = true
+filter   = nginx-limit-req
+port     = http,https
+logpath  = /var/log/nginx/imv-erp-error.log
+maxretry = 15
+bantime  = 3600
+findtime = 300
+F2BEOF
+systemctl enable fail2ban -q
+systemctl restart fail2ban
+log "Fail2ban configurado (bloqueia IPs após tentativas excessivas)"
 
 # ── resultado ──────────────────────────────────────────────────
 echo ""

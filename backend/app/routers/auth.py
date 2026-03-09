@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
@@ -12,6 +12,11 @@ from app.auth import (
 )
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
+
+# Importa o limiter registrado no app
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+limiter = Limiter(key_func=get_remote_address)
 
 
 # ── Schemas ───────────────────────────────────────────────────────
@@ -57,7 +62,8 @@ class SenhaChange(BaseModel):
 
 # ── Endpoints públicos ────────────────────────────────────────────
 @router.post("/login", response_model=TokenOut)
-def login(data: LoginIn, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, data: LoginIn, db: Session = Depends(get_db)):
     """Autenticação. Erro genérico para não revelar se email existe."""
     user = db.query(Usuario).filter(
         Usuario.email == data.email.lower().strip(),
