@@ -2681,16 +2681,19 @@ function onChegadaChange() {
 }
 
 // ── FILE UPLOAD ───────────────────────────────────────────────────
+let _pendingPdfFile = null; // arquivo selecionado aguardando upload ao salvar
+
 function onFileSelect(input) {
   const area = document.getElementById('upload-area');
   if (input.files && input.files[0]) {
     const f = input.files[0];
+    _pendingPdfFile = f; // guarda referência antes de substituir o DOM
     area.classList.add('upload-done');
     area.innerHTML = `
       <div class="upload-icon">✅</div>
       <div class="upload-text">${f.name}</div>
-      <div class="upload-sub">${(f.size/1024).toFixed(1)} KB · PDF anexado</div>`;
-    showToast('PDF anexado com sucesso!','ok');
+      <div class="upload-sub">${(f.size/1024).toFixed(1)} KB · PDF pronto para envio</div>`;
+    showToast('PDF selecionado — clique em Salvar para enviar!','ok');
   }
 }
 
@@ -3802,6 +3805,7 @@ let _editId = null; // null = novo registro, number = editando
 
 function _resetModal() {
   _editId = null;
+  _pendingPdfFile = null;
   document.querySelector("#modal-new h3").textContent = "Novo Registro";
   document.querySelector("#modal-new .btn-primary").textContent = "Salvar Registro";
   ["f-num-ordem","f-nome","f-cpf","f-telefone","f-casa","f-quadra","f-lote",
@@ -4157,10 +4161,10 @@ saveRecord = async function() {
       clienteId = novo.id;
     }
     // upload de PDF se houver arquivo selecionado
-    const pdfFile = document.getElementById("pdf-input")?.files[0];
-    if (pdfFile && clienteId) {
+    if (_pendingPdfFile && clienteId) {
       showToast("Enviando PDF...", "");
-      await uploadPdfApi(clienteId, pdfFile);
+      await uploadPdfApi(clienteId, _pendingPdfFile);
+      _pendingPdfFile = null;
     }
     showToast(_editId ? "Registro atualizado com sucesso!" : "Registro salvo com sucesso!", "ok");
     closeModal("modal-new");
