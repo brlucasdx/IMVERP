@@ -291,6 +291,21 @@ tbody tr.row-concluido:hover { background: #ecfdf5; }
 .pipeline-bar-stats { font-size:11px;color:var(--text-muted);min-width:90px;text-align:right; }
 .pipeline-bottleneck { background:#fef3c7;border-left:3px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:10px;font-size:12px; }
 .pipeline-bottleneck strong { color:#92400e; }
+/* Abas de Relatório */
+.rel-tab-bar { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:20px; }
+.rel-tab-btn { padding:10px 22px; font-size:13px; font-weight:600; border:none; background:transparent; cursor:pointer; color:var(--text-muted); border-bottom:3px solid transparent; margin-bottom:-2px; transition:all .15s; }
+.rel-tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+.rel-tab-btn:hover:not(.active) { color:var(--text); background:var(--bg); border-radius:6px 6px 0 0; }
+.rel-tab-panel { display:none; }
+.rel-tab-panel.active { display:block; }
+/* Tabela de corretores no relatório */
+.relcor-table { width:100%; border-collapse:collapse; font-size:12px; }
+.relcor-table th { background:#f8fafc; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted); padding:8px 10px; border-bottom:2px solid var(--border); white-space:nowrap; }
+.relcor-table td { padding:10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+.relcor-table tr:last-child td { border-bottom:none; }
+.relcor-table tr:hover td { background:#f8fafc; }
+.relcor-pct-bar { height:5px; background:var(--bg); border-radius:99px; overflow:hidden; min-width:60px; }
+.relcor-pct-fill { height:100%; border-radius:99px; transition:width .5s; }
 .rel-table { width:100%;border-collapse:collapse;font-size:12px; }
 .rel-table th { background:#f8fafc;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:8px 12px;border-bottom:2px solid var(--border);text-align:left; }
 .rel-table td { padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle; }
@@ -1479,75 +1494,123 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
         </div>
       </div>
 
-      <!-- Controles do período -->
-      <div class="rel-header-bar">
+      <!-- Controles do período (compartilhado entre abas) -->
+      <div class="rel-header-bar" id="rel-header-controls">
         <div class="periodo-toggle">
           <button id="btn-periodo-mensal" class="active" onclick="setPeriodo('mensal')">📅 Mensal</button>
           <button id="btn-periodo-semanal" onclick="setPeriodo('semanal')">📆 Semanal</button>
         </div>
-        <input type="month" class="rel-mes-select" id="rel-mes-input" onchange="loadRelatorio()">
-        <input type="week"  class="rel-mes-select" id="rel-sem-input" onchange="loadRelatorio()" style="display:none">
+        <input type="month" class="rel-mes-select" id="rel-mes-input" onchange="loadRelatorioAba()">
+        <input type="week"  class="rel-mes-select" id="rel-sem-input" onchange="loadRelatorioAba()" style="display:none">
         <span id="rel-loading" style="font-size:12px;color:var(--text-muted);display:none">⏳ Carregando...</span>
         <span id="rel-periodo-label" style="font-size:12px;color:var(--text-muted);margin-left:4px"></span>
       </div>
 
-      <!-- KPIs do período -->
-      <div class="rel-kpi-row">
-        <div class="rel-kpi">
-          <div class="rk-num" id="rel-kpi-ass">—</div>
-          <div class="rk-lbl" id="rel-kpi-ass-lbl">Assinaturas no mês</div>
+      <!-- Barra de abas -->
+      <div class="rel-tab-bar">
+        <button class="rel-tab-btn active" id="reltab-empreendimentos" onclick="setRelTab('empreendimentos')">🏘️ Empreendimentos</button>
+        <button class="rel-tab-btn" id="reltab-corretores" onclick="setRelTab('corretores')">👤 Corretores</button>
+        <button class="rel-tab-btn" id="reltab-pipeline" onclick="setRelTab('pipeline')">🔄 Pipeline</button>
+      </div>
+
+      <!-- ABA: Empreendimentos -->
+      <div class="rel-tab-panel active" id="panel-empreendimentos">
+        <!-- KPIs do período -->
+        <div class="rel-kpi-row">
+          <div class="rel-kpi">
+            <div class="rk-num" id="rel-kpi-ass">—</div>
+            <div class="rk-lbl" id="rel-kpi-ass-lbl">Assinaturas no mês</div>
+          </div>
+          <div class="rel-kpi">
+            <div class="rk-num" id="rel-kpi-rcpm" style="font-size:20px">—</div>
+            <div class="rk-lbl">RCPM total gerado</div>
+          </div>
+          <div class="rel-kpi">
+            <div class="rk-num" id="rel-kpi-conc" style="color:#10b981">—</div>
+            <div class="rk-lbl">Processos concluídos</div>
+          </div>
         </div>
-        <div class="rel-kpi">
-          <div class="rk-num" id="rel-kpi-rcpm" style="font-size:20px">—</div>
-          <div class="rk-lbl">RCPM total gerado</div>
-        </div>
-        <div class="rel-kpi">
-          <div class="rk-num" id="rel-kpi-conc" style="color:#10b981">—</div>
-          <div class="rk-lbl">Processos concluídos</div>
+
+        <!-- Tabela por empreendimento + ranking lado a lado -->
+        <div class="dash-row cols-23">
+          <div class="section-card">
+            <div class="section-header"><h3>🏘️ Por Empreendimento</h3></div>
+            <div style="overflow-x:auto">
+              <table class="rel-table">
+                <thead>
+                  <tr>
+                    <th>Empreendimento</th>
+                    <th style="text-align:center">Assinaturas</th>
+                    <th style="text-align:center">RCPM Gerado</th>
+                    <th style="text-align:center">Em Cartório</th>
+                    <th style="text-align:center">Concluídos</th>
+                    <th style="text-align:center">Atrasados</th>
+                    <th style="text-align:center">Ativos</th>
+                  </tr>
+                </thead>
+                <tbody id="rel-table-body">
+                  <tr><td colspan="7" style="padding:32px;text-align:center;color:var(--text-muted)">Selecione um período.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-header"><h3 id="rel-rank-title">🏆 Ranking Corretores do Mês</h3></div>
+            <div class="rel-rank-list" id="rel-rank-list">
+              <div style="padding:32px;text-align:center;color:var(--text-muted);font-size:13px">Aguardando...</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Tabela por empreendimento + ranking lado a lado -->
-      <div class="dash-row cols-23">
-        <div class="section-card">
+      <!-- ABA: Corretores -->
+      <div class="rel-tab-panel" id="panel-corretores">
+        <!-- KPIs corretores -->
+        <div class="rel-kpi-row" id="relcor-kpi-row">
+          <div class="rel-kpi"><div class="rk-num" id="relcor-kpi-cor">—</div><div class="rk-lbl">Corretores ativos</div></div>
+          <div class="rel-kpi"><div class="rk-num" id="relcor-kpi-ass" style="color:var(--primary)">—</div><div class="rk-lbl" id="relcor-kpi-ass-lbl">Assinaturas no período</div></div>
+          <div class="rel-kpi"><div class="rk-num" id="relcor-kpi-lider" style="font-size:16px">—</div><div class="rk-lbl">Líder do período</div></div>
+        </div>
+
+        <!-- Tabela de performance -->
+        <div class="section-card" style="margin-bottom:0">
           <div class="section-header">
-            <h3>🏘️ Por Empreendimento</h3>
+            <h3 id="relcor-titulo">👤 Performance de Corretores</h3>
+            <span id="relcor-loading" style="font-size:12px;color:var(--text-muted);display:none">⏳ Carregando...</span>
           </div>
           <div style="overflow-x:auto">
-            <table class="rel-table">
+            <table class="relcor-table">
               <thead>
                 <tr>
-                  <th>Empreendimento</th>
-                  <th style="text-align:center">Assinaturas</th>
-                  <th style="text-align:center">RCPM Gerado</th>
-                  <th style="text-align:center">Em Cartório</th>
-                  <th style="text-align:center">Concluídos</th>
-                  <th style="text-align:center">Atrasados</th>
-                  <th style="text-align:center">Ativos</th>
+                  <th style="text-align:center;width:36px">#</th>
+                  <th>Corretor</th>
+                  <th style="text-align:center">Ass. período</th>
+                  <th style="text-align:center">% do total</th>
+                  <th>Participação</th>
+                  <th style="text-align:center">Total clientes</th>
+                  <th style="text-align:center">✅ Concluídos</th>
+                  <th style="text-align:center">🔵 Andamento</th>
+                  <th>Empreendimentos</th>
                 </tr>
               </thead>
-              <tbody id="rel-table-body">
-                <tr><td colspan="7" style="padding:32px;text-align:center;color:var(--text-muted)">Selecione um período para gerar o relatório.</td></tr>
+              <tbody id="relcor-tbody">
+                <tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text-muted)">Selecione um período.</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="section-card">
-          <div class="section-header"><h3 id="rel-rank-title">🏆 Ranking Corretores do Mês</h3></div>
-          <div class="rel-rank-list" id="rel-rank-list">
-            <div style="padding:32px;text-align:center;color:var(--text-muted);font-size:13px">Aguardando...</div>
-          </div>
-        </div>
       </div>
 
-      <!-- Pipeline — Tempo por Etapa -->
-      <div class="section-card" style="margin-bottom:0">
-        <div class="section-header">
-          <h3>🔄 Análise de Pipeline — Tempo por Etapa</h3>
-          <button class="btn btn-outline btn-sm" onclick="loadPipelineDuracao()">↻ Atualizar</button>
-        </div>
-        <div id="pipeline-duracao-body" style="padding:8px 0">
-          <div style="padding:24px;text-align:center;color:var(--text-muted)">Carregando análise de pipeline...</div>
+      <!-- ABA: Pipeline -->
+      <div class="rel-tab-panel" id="panel-pipeline">
+        <div class="section-card" style="margin-bottom:0">
+          <div class="section-header">
+            <h3>🔄 Análise de Pipeline — Tempo por Etapa</h3>
+            <button class="btn btn-outline btn-sm" onclick="loadPipelineDuracao()">↻ Atualizar</button>
+          </div>
+          <div id="pipeline-duracao-body" style="padding:8px 0">
+            <div style="padding:24px;text-align:center;color:var(--text-muted)">Carregando análise de pipeline...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -2641,6 +2704,27 @@ async function loadDashboard() {
 // ── Relatórios (Mensal / Semanal) ─────────────────────────────────
 let _periodoAtual = "mensal";
 
+let _relTabAtual = "empreendimentos";
+
+function setRelTab(tab) {
+  _relTabAtual = tab;
+  ["empreendimentos","corretores","pipeline"].forEach(t => {
+    document.getElementById("reltab-" + t).classList.toggle("active", t === tab);
+    document.getElementById("panel-" + t).classList.toggle("active", t === tab);
+  });
+  // controles de período: visível em empreendimentos e corretores, oculto em pipeline
+  const ctrl = document.getElementById("rel-header-controls");
+  if (ctrl) ctrl.style.display = tab === "pipeline" ? "none" : "";
+
+  if (tab === "pipeline") { loadPipelineDuracao(); return; }
+  loadRelatorioAba();
+}
+
+function loadRelatorioAba() {
+  if (_relTabAtual === "corretores") loadRelatorioCorretores();
+  else loadRelatorio();
+}
+
 function setPeriodo(p) {
   _periodoAtual = p;
   document.getElementById("btn-periodo-mensal").classList.toggle("active", p === "mensal");
@@ -2651,7 +2735,7 @@ function setPeriodo(p) {
   if (lbl) lbl.textContent = p === "mensal" ? "Assinaturas no mês" : "Assinaturas na semana";
   const rankTitle = document.getElementById("rel-rank-title");
   if (rankTitle) rankTitle.textContent = p === "mensal" ? "🏆 Ranking Corretores do Mês" : "🏆 Ranking Corretores da Semana";
-  loadRelatorio();
+  loadRelatorioAba();
 }
 
 function initRelatorios() {
@@ -2668,6 +2752,7 @@ function initRelatorios() {
     const semana = Math.ceil(((hoje - iniAno) / 86400000 + iniAno.getDay() + 1) / 7);
     inputSem.value = `${ano}-W${String(semana).padStart(2,"0")}`;
   }
+  _relTabAtual = "empreendimentos";
   loadRelatorio();
   loadPipelineDuracao();
 }
@@ -2773,6 +2858,110 @@ const _PIPELINE_COLORS = {
   entrega_chave:"#a855f7",
   concluido:    "#64748b",
 };
+
+async function loadRelatorioCorretores() {
+  const isMensal = _periodoAtual === "mensal";
+  const loading = document.getElementById("rel-loading");
+  const loadingCor = document.getElementById("relcor-loading");
+  if (loading) loading.style.display = "inline";
+  if (loadingCor) loadingCor.style.display = "inline";
+  try {
+    let qs = "";
+    if (isMensal) {
+      const mes = document.getElementById("rel-mes-input")?.value || "";
+      if (mes) qs = `?mes=${mes}`;
+    } else {
+      const sem = document.getElementById("rel-sem-input")?.value || "";
+      if (sem) qs = `?semana=${sem}`;
+    }
+    const d = await apiFetch(`/dashboard/relatorio-corretores${qs}`);
+
+    // KPIs
+    const titulo = document.getElementById("relcor-titulo");
+    if (titulo) titulo.textContent = `👤 Performance de Corretores — ${d.periodo}`;
+    document.getElementById("relcor-kpi-cor").textContent  = d.total_corretores;
+    document.getElementById("relcor-kpi-ass").textContent  = d.total_assinaturas_periodo;
+    const liderEl = document.getElementById("relcor-kpi-lider");
+    const lider = d.corretores.find(c => c.assinaturas_periodo > 0);
+    if (liderEl) liderEl.textContent = lider ? `${lider.nome.split(" ")[0]} (${lider.assinaturas_periodo} ass.)` : "—";
+    const assLbl = document.getElementById("relcor-kpi-ass-lbl");
+    if (assLbl) assLbl.textContent = isMensal ? "Assinaturas no mês" : "Assinaturas na semana";
+
+    const rankColors = ["#f5c518","#94a3b8","#cd7f32"];
+    const rankCls    = ["gold","silver","bronze"];
+    const maxAss = d.corretores[0]?.total_clientes || 1;
+
+    const tbody = document.getElementById("relcor-tbody");
+    if (!tbody) return;
+    if (!d.corretores.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--text-muted)">Nenhum corretor.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = d.corretores.map((c, i) => {
+      const initials = c.nome.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
+      const bg = rankColors[i] || "var(--primary-light)";
+      const pctBar = maxAss > 0 ? Math.round(c.total_clientes / maxAss * 100) : 0;
+      const empChips = (c.empreendimentos||[]).slice(0,3).map(e =>
+        `<span class="cor-emp-chip" title="${e.nome} — ${e.total} clientes">${e.nome}</span>`).join(" ");
+      const assBadge = c.assinaturas_periodo > 0
+        ? `<span style="background:var(--primary)20;color:var(--primary);padding:2px 8px;border-radius:99px;font-weight:800">${c.assinaturas_periodo}</span>`
+        : `<span style="color:var(--text-muted)">—</span>`;
+      const pctBadge = c.pct_do_total > 0
+        ? `<span style="font-size:11px;color:var(--text-muted)">${c.pct_do_total}%</span>`
+        : `<span style="color:var(--text-muted)">—</span>`;
+
+      return `<tr>
+        <td style="text-align:center">
+          <div class="rank-pos ${rankCls[i]||'other'}" style="width:24px;height:24px;font-size:11px;margin:auto">${i+1}</div>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="cor-avatar" style="background:${bg};width:32px;height:32px;font-size:11px">${initials}</div>
+            <div>
+              <div style="font-weight:700;font-size:13px">${c.nome}</div>
+              ${c.creci ? `<div style="font-size:10px;color:var(--text-muted);font-family:monospace">${c.creci}</div>` : ""}
+            </div>
+          </div>
+        </td>
+        <td style="text-align:center">${assBadge}</td>
+        <td style="text-align:center">${pctBadge}</td>
+        <td>
+          <div class="relcor-pct-bar" style="min-width:80px">
+            <div class="relcor-pct-fill" style="width:${pctBar}%;background:${bg}"></div>
+          </div>
+        </td>
+        <td style="text-align:center;font-weight:700">${c.total_clientes}</td>
+        <td style="text-align:center;color:#10b981;font-weight:700">${c.concluidos}</td>
+        <td style="text-align:center;color:var(--primary);font-weight:700">${c.em_andamento}</td>
+        <td><div style="display:flex;flex-wrap:wrap;gap:3px">${empChips||"—"}</div></td>
+      </tr>`;
+    }).join("");
+
+    // Linha de total
+    const totAss = d.corretores.reduce((s,c)=>s+c.assinaturas_periodo,0);
+    const totCli = d.corretores.reduce((s,c)=>s+c.total_clientes,0);
+    const totConc = d.corretores.reduce((s,c)=>s+c.concluidos,0);
+    const totAnd  = d.corretores.reduce((s,c)=>s+c.em_andamento,0);
+    tbody.innerHTML += `<tr style="background:#f0fdf4;font-weight:700">
+      <td></td>
+      <td>TOTAL</td>
+      <td style="text-align:center;color:var(--primary)">${totAss}</td>
+      <td style="text-align:center">100%</td>
+      <td></td>
+      <td style="text-align:center">${totCli}</td>
+      <td style="text-align:center;color:#10b981">${totConc}</td>
+      <td style="text-align:center;color:var(--primary)">${totAnd}</td>
+      <td></td>
+    </tr>`;
+
+  } catch(e) {
+    showToast("Erro ao carregar relatório de corretores: " + e.message, "erro");
+  } finally {
+    if (loading) loading.style.display = "none";
+    if (loadingCor) loadingCor.style.display = "none";
+  }
+}
 
 async function loadPipelineDuracao() {
   const el = document.getElementById("pipeline-duracao-body");

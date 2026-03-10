@@ -371,6 +371,100 @@ def relatorio_semanal(
     )
 
 
+# ── Relatório de Performance de Corretores ────────────────────────
+@router.get("/relatorio-corretores")
+def relatorio_corretores(
+    mes: Optional[str] = Query(None, description="YYYY-MM"),
+    semana: Optional[str] = Query(None, description="YYYY-Wnn"),
+    db: Session = Depends(get_db),
+):
+    """Performance individual de cada corretor num período (mensal ou semanal)."""
+    from sqlalchemy.orm import joinedload
+
+    hoje = date.today()
+    if semana:
+        try:
+            ano_str, w_str = semana.split("-W")
+            dt = datetime.strptime(f"{ano_str}-W{int(w_str):02d}-1", "%G-W%V-%u")
+            inicio = dt.date()
+        except Exception:
+            inicio = hoje - timedelta(days=hoje.weekday())
+        fim = inicio + timedelta(days=7)
+        label = f"Semana {inicio.strftime('%d/%m')} – {(fim - timedelta(days=1)).strftime('%d/%m/%Y')}"
+    else:
+        if mes:
+            try:
+                ano, m = int(mes.split("-")[0]), int(mes.split("-")[1])
+            except Exception:
+                ano, m = hoje.year, hoje.month
+        else:
+            ano, m = hoje.year, hoje.month
+        inicio = date(ano, m, 1)
+        fim = date(ano + 1, 1, 1) if m == 12 else date(ano, m + 1, 1)
+        label = f"{ano:04d}-{m:02d}"
+
+    corretores = db.query(Corretor).filter(Corretor.ativo == True).order_by(Corretor.nome).all()
+
+    all_clients = (
+        db.query(Cliente)
+        .options(joinedload(Cliente.empreendimento))
+        .filter(Cliente.ativo == True, Cliente.deleted_at == None, Cliente.corretor_id != None)
+        .all()
+    )
+
+    por_cor: dict = defaultdict(list)
+    for c in all_clients:
+        por_cor[c.corretor_id].append(c)
+
+    total_ass_periodo = 0
+    result = []
+
+    for cor in corretores:
+        clientes = por_cor.get(cor.id, [])
+        ass_periodo = [
+            c for c in clientes
+            if c.data_assinatura and inicio <= c.data_assinatura < fim
+        ]
+        total = len(clientes)
+        concluidos = sum(1 for c in clientes if c.workflow_step and c.workflow_step.value == "concluido")
+        emps_set: dict[str, int] = {}
+        for c in clientes:
+            n = c.empreendimento.nome if c.empreendimento else "—"
+            emps_set[n] = emps_set.get(n, 0) + 1
+        emps = [{"nome": k, "total": v} for k, v in sorted(emps_set.items(), key=lambda x: -x[1])]
+
+        assinaturas = len(ass_periodo)
+        total_ass_periodo += assinaturas
+
+        result.append({
+            "id": cor.id,
+            "nome": cor.nome,
+            "creci": cor.creci or "",
+            "telefone": cor.telefone or "",
+            "assinaturas_periodo": assinaturas,
+            "total_clientes": total,
+            "concluidos": concluidos,
+            "em_andamento": total - concluidos,
+            "empreendimentos": emps,
+            "pct_do_total": 0,
+        })
+
+    result.sort(key=lambda x: (-x["assinaturas_periodo"], -x["total_clientes"]))
+
+    for r in result:
+        r["pct_do_total"] = (
+            round(r["assinaturas_periodo"] / total_ass_periodo * 100, 1)
+            if total_ass_periodo else 0
+        )
+
+    return {
+        "periodo": label,
+        "total_corretores": len(corretores),
+        "total_assinaturas_periodo": total_ass_periodo,
+        "corretores": result,
+    }
+
+
 # ── Pipeline — Duração por Etapa ──────────────────────────────────
 _WF_ORDER_LIST = [
     "engenharia", "aprovacao", "documentacao",
