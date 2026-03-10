@@ -1,0 +1,40 @@
+name: Backup Diário — Railway → Google Drive
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # 02:00 BRT (UTC-3)
+  workflow_dispatch:      # permite rodar manualmente
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Instalar rclone
+        run: curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configurar rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "${{ secrets.RCLONE_CONF }}" > ~/.config/rclone/rclone.conf
+
+      - name: Fazer pg_dump do Railway
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_PUBLIC_URL }}
+        run: |
+          FILENAME="imverp_backup_$(date +'%Y-%m-%d').sql.gz"
+          pg_dump "$DATABASE_URL" --no-owner --no-acl | gzip > "$FILENAME"
+          echo "FILENAME=$FILENAME" >> $GITHUB_ENV
+
+      - name: Enviar para Google Drive
+        run: |
+          rclone copy "${{ env.FILENAME }}" "IMVERP-BANCO:Backups/IMVERP/" --progress
+
+      - name: Limpar backups com mais de 30 dias
+        run: |
+          rclone delete "IMVERP-BANCO:Backups/IMVERP/" \
+            --min-age 30d \
+            --progress
