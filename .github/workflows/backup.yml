@@ -26,15 +26,22 @@ jobs:
         env:
           RCLONE_TOKEN: ${{ secrets.RCLONE_TOKEN }}
         run: |
-          mkdir -p ~/.config/rclone
-          printf '[IMVERP-BANCO]\ntype = drive\nscope = drive\ntoken = %s\n' "$RCLONE_TOKEN" > ~/.config/rclone/rclone.conf
+          python3 - <<'PYEOF'
+          import os
+          token = os.environ['RCLONE_TOKEN']
+          config = '[IMVERP-BANCO]\ntype = drive\nscope = drive\ntoken = {}\n'.format(token)
+          os.makedirs(os.path.expanduser('~/.config/rclone'), exist_ok=True)
+          with open(os.path.expanduser('~/.config/rclone/rclone.conf'), 'w') as f:
+              f.write(config)
+          print('rclone.conf criado com sucesso')
+          PYEOF
 
       - name: Fazer pg_dump do Railway
         env:
           DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_PUBLIC_URL }}
         run: |
           FILENAME="imverp_backup_$(date +'%Y-%m-%d').sql.gz"
-          pg_dump "$DATABASE_URL" --no-owner --no-acl | gzip > "$FILENAME"
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" --no-owner --no-acl | gzip > "$FILENAME"
           echo "FILENAME=$FILENAME" >> $GITHUB_ENV
 
       - name: Enviar para Google Drive
