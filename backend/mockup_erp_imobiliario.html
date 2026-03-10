@@ -2057,13 +2057,14 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
 
     <!-- Upload de PDF do contrato -->
     <div class="form-group">
-      <label class="form-label">📎 Contrato Escaneado (PDF)</label>
+      <label class="form-label">📎 Contratos / Documentos (PDF)</label>
       <div class="upload-area" id="upload-area" onclick="document.getElementById('pdf-input').click()">
         <input type="file" id="pdf-input" accept=".pdf" onchange="onFileSelect(this)">
         <div class="upload-icon">📄</div>
-        <div class="upload-text">Clique para anexar o contrato do cartório</div>
-        <div class="upload-sub">PDF · Máx. 10 MB</div>
+        <div class="upload-text">Clique para adicionar PDF</div>
+        <div class="upload-sub">PDF · Máx. 10 MB · múltiplos permitidos</div>
       </div>
+      <div id="edit-pdfs-lista" style="margin-top:8px"></div>
     </div>
 
     <div class="modal-footer">
@@ -3800,6 +3801,53 @@ async function downloadPdf(clienteId) {
   }
 }
 
+// ── PDFs do cliente (lista no modal de edição) ────────────────────
+async function _carregarPdfsEdit(clienteId) {
+  const lista = document.getElementById("edit-pdfs-lista");
+  if (!lista || !clienteId) return;
+  try {
+    const pdfs = await apiFetch(`/clientes/${clienteId}/pdfs`);
+    if (!pdfs.length) { lista.innerHTML = ""; return; }
+    lista.innerHTML = pdfs.map(p => {
+      const kb = p.tamanho ? (p.tamanho / 1024).toFixed(1) + " KB" : "";
+      const dt = new Date(p.created_at).toLocaleDateString("pt-BR");
+      return `<div id="epdf-${p.id}" style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:4px">
+        <span style="font-size:16px">📄</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.filename}</div>
+          <div style="font-size:10px;color:var(--text-muted)">${kb} · ${dt}</div>
+        </div>
+        <button onclick="downloadPdfById(${p.id})" class="btn btn-outline btn-sm" style="font-size:10px;padding:2px 8px">📥</button>
+        <button onclick="excluirPdfEdit(${p.id},'${p.filename.replace(/'/g,"\\'")}')" class="btn btn-sm" style="font-size:10px;padding:2px 8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5">🗑</button>
+      </div>`;
+    }).join("");
+  } catch(e) { lista.innerHTML = ""; }
+}
+
+async function downloadPdfById(pdfId) {
+  try {
+    showToast("Carregando PDF...", "");
+    const token = localStorage.getItem("imv_token");
+    const res = await fetch(`${API_BASE}/clientes/pdfs/${pdfId}/download`, {
+      headers: token ? { "Authorization": `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("PDF não encontrado");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch(e) { showToast("Erro ao baixar PDF: " + e.message, ""); }
+}
+
+async function excluirPdfEdit(pdfId, filename) {
+  if (!confirm(`Excluir "${filename}"?`)) return;
+  try {
+    await apiFetch(`/clientes/pdfs/${pdfId}`, { method: "DELETE" });
+    document.getElementById(`epdf-${pdfId}`)?.remove();
+    showToast("PDF excluído!", "ok");
+  } catch(e) { showToast("Erro: " + e.message, ""); }
+}
+
 // ── Controle de edição ────────────────────────────────────────────
 let _editId = null; // null = novo registro, number = editando
 
@@ -3866,28 +3914,17 @@ async function editarCliente(id) {
     if (c.corretor?.id)  document.getElementById("sel-corretor").value = c.corretor.id;
     if (c.analista?.id)  document.getElementById("sel-analista").value = c.analista.id;
 
-    // status do PDF na área de upload
+    // lista de PDFs na área de upload
     const uploadArea = document.getElementById("upload-area");
     if (uploadArea) {
-      if (c.pdf_path) {
-        uploadArea.className = "upload-area upload-done";
-        uploadArea.innerHTML = `
-          <input type="file" id="pdf-input" accept=".pdf" onchange="onFileSelect(this)" style="display:none">
-          <div class="upload-icon">✅</div>
-          <div class="upload-text">${c.pdf_path}</div>
-          <div class="upload-sub" style="display:flex;gap:8px;justify-content:center;align-items:center;margin-top:4px">
-            <button onclick="event.stopPropagation();downloadPdf(${c.id})" class="btn btn-outline btn-sm" style="font-size:10px;padding:2px 10px">📥 Baixar PDF</button>
-            <span style="cursor:pointer;color:var(--text-muted)" onclick="document.getElementById('pdf-input').click();event.stopPropagation()">Substituir</span>
-          </div>`;
-      } else {
-        uploadArea.className = "upload-area";
-        uploadArea.innerHTML = `
-          <input type="file" id="pdf-input" accept=".pdf" onchange="onFileSelect(this)" style="display:none">
-          <div class="upload-icon">📄</div>
-          <div class="upload-text">Clique para anexar o contrato do cartório</div>
-          <div class="upload-sub">PDF · Máx. 10 MB</div>`;
-      }
+      uploadArea.className = "upload-area";
+      uploadArea.innerHTML = `
+        <input type="file" id="pdf-input" accept=".pdf" onchange="onFileSelect(this)" style="display:none">
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">Clique para adicionar PDF</div>
+        <div class="upload-sub">PDF · Máx. 10 MB · múltiplos permitidos</div>`;
     }
+    _carregarPdfsEdit(c.id);
 
     // toggle doc recebido
     if (c.doc_recebido) {
@@ -5204,19 +5241,8 @@ async function verCliente(id) {
       </div>` : ""}
 
       <div class="det-section">
-        <div class="det-section-title">📎 Contrato PDF</div>
-        ${c.pdf_path
-          ? `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0">
-               <span style="font-size:22px">📄</span>
-               <div style="flex:1">
-                 <div style="font-size:13px;font-weight:700;color:var(--success)">PDF anexado</div>
-                 <div style="font-size:11px;color:var(--text-muted)">${c.pdf_path}</div>
-               </div>
-               <button onclick="downloadPdf(${c.id})" class="btn btn-outline btn-sm">📥 Abrir / Baixar</button>
-             </div>`
-          : `<div style="padding:10px 14px;background:var(--bg);border-radius:10px;border:1px dashed var(--border);color:var(--text-muted);font-size:13px">
-               Nenhum PDF anexado — use o botão <strong>Editar</strong> para adicionar.
-             </div>`}
+        <div class="det-section-title">📎 Documentos PDF</div>
+        <div id="det-pdfs-lista"><span style="color:var(--text-muted);font-size:13px">Carregando...</span></div>
       </div>
     `;
 
@@ -5249,8 +5275,36 @@ async function verCliente(id) {
       <div id="dttc-historico" class="det-tab-content"></div>
     `;
     openModal("modal-detalhe");
+    // carrega lista de PDFs após renderizar o corpo
+    _carregarPdfsDetalhe(id);
   } catch(e) {
     showToast("Erro ao carregar detalhes: " + e.message, "");
+  }
+}
+
+async function _carregarPdfsDetalhe(clienteId) {
+  const lista = document.getElementById("det-pdfs-lista");
+  if (!lista) return;
+  try {
+    const pdfs = await apiFetch(`/clientes/${clienteId}/pdfs`);
+    if (!pdfs.length) {
+      lista.innerHTML = `<div style="padding:10px 14px;background:var(--bg);border-radius:10px;border:1px dashed var(--border);color:var(--text-muted);font-size:13px">Nenhum PDF anexado — use <strong>Editar</strong> para adicionar.</div>`;
+      return;
+    }
+    lista.innerHTML = pdfs.map(p => {
+      const kb = p.tamanho ? (p.tamanho / 1024).toFixed(1) + " KB" : "";
+      const dt = new Date(p.created_at).toLocaleDateString("pt-BR");
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;margin-bottom:4px">
+        <span style="font-size:18px">📄</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.filename}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${kb} · ${dt}</div>
+        </div>
+        <button onclick="downloadPdfById(${p.id})" class="btn btn-outline btn-sm">📥 Baixar</button>
+      </div>`;
+    }).join("");
+  } catch(e) {
+    lista.innerHTML = `<div style="color:var(--text-muted);font-size:13px">Erro ao carregar PDFs.</div>`;
   }
 }
 

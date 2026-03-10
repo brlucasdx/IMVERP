@@ -166,6 +166,21 @@ class Cliente(Base):
                                   order_by="LogAtividade.created_at.desc()", cascade="all, delete-orphan")
     notas          = relationship("Nota", back_populates="cliente",
                                   order_by="Nota.created_at.desc()", cascade="all, delete-orphan")
+    pdfs           = relationship("ClientePdf", back_populates="cliente",
+                                  order_by="ClientePdf.created_at.desc()", cascade="all, delete-orphan")
+
+
+class ClientePdf(Base):
+    __tablename__ = "cliente_pdfs"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=False)
+    filename   = Column(String(300), nullable=False)
+    data       = Column(LargeBinary, nullable=False)
+    tamanho    = Column(Integer)   # bytes
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    cliente = relationship("Cliente", back_populates="pdfs")
 
 
 class TipoUsuario(str, enum.Enum):

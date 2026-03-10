@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db, settings
-from app.models import Cliente, DocStatus, Empreendimento, LogAtividade, Nota, Usuario, WorkflowStep
-from app.schemas import ClienteCreate, ClienteOut, ClienteUpdate, LogOut, NotaCreate, NotaOut
+from app.models import Cliente, ClientePdf, DocStatus, Empreendimento, LogAtividade, Nota, Usuario, WorkflowStep
+from app.schemas import ClienteCreate, ClienteOut, ClienteUpdate, ClientePdfOut, LogOut, NotaCreate, NotaOut
 
 router = APIRouter(prefix="/api/clientes", tags=["Clientes"])
 router.dependencies.append(Depends(get_current_user))
@@ -286,7 +286,7 @@ def deletar_cliente(
 # ── Upload PDF ────────────────────────────────────────────────────
 MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
 
-@router.post("/{cliente_id}/upload", response_model=ClienteOut)
+@router.post("/{cliente_id}/upload", response_model=ClientePdfOut)
 async def upload_pdf(
     cliente_id: int,
     arquivo: UploadFile = File(...),
@@ -305,32 +305,76 @@ async def upload_pdf(
     if len(data) > MAX_PDF_SIZE:
         raise HTTPException(400, "Arquivo muito grande — máximo 10 MB")
 
-    cliente.pdf_data = data
-    cliente.pdf_path = arquivo.filename  # mantém nome original como indicador de presença
+    pdf = ClientePdf(
+        cliente_id=cliente_id,
+        filename=arquivo.filename,
+        data=data,
+        tamanho=len(data),
+    )
+    db.add(pdf)
+    # mantém pdf_path como indicador de presença (usado em RCPM etc.)
+    cliente.pdf_path = arquivo.filename
     _log(db, cliente_id, "pdf_enviado",
-         f"Contrato PDF enviado por {current_user.nome}",
+         f"{arquivo.filename} enviado por {current_user.nome}",
          current_user.id)
     db.commit()
-    db.refresh(cliente)
-    return cliente
+    db.refresh(pdf)
+    return pdf
 
 
-# ── Download PDF ───────────────────────────────────────────────────
-@router.get("/{cliente_id}/pdf")
-def download_pdf(
+# ── Listar PDFs do cliente ─────────────────────────────────────────
+@router.get("/{cliente_id}/pdfs", response_model=list[ClientePdfOut])
+def listar_pdfs(
     cliente_id: int,
     db: Session = Depends(get_db),
     _: Usuario = Depends(get_current_user),
 ):
     cliente = db.get(Cliente, cliente_id)
-    if not cliente or not cliente.pdf_data:
+    if not cliente:
+        raise HTTPException(404, "Cliente não encontrado")
+    return db.query(ClientePdf).filter(ClientePdf.cliente_id == cliente_id).order_by(ClientePdf.created_at.desc()).all()
+
+
+# ── Download PDF por ID ────────────────────────────────────────────
+@router.get("/pdfs/{pdf_id}/download")
+def download_pdf(
+    pdf_id: int,
+    db: Session = Depends(get_db),
+    _: Usuario = Depends(get_current_user),
+):
+    pdf = db.get(ClientePdf, pdf_id)
+    if not pdf:
         raise HTTPException(404, "PDF não encontrado")
-    filename = cliente.pdf_path or "contrato.pdf"
     return Response(
-        content=cliente.pdf_data,
+        content=pdf.data,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+        headers={"Content-Disposition": f'inline; filename="{pdf.filename}"'},
     )
+
+
+# ── Excluir PDF ────────────────────────────────────────────────────
+@router.delete("/pdfs/{pdf_id}")
+def excluir_pdf(
+    pdf_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    pdf = db.get(ClientePdf, pdf_id)
+    if not pdf:
+        raise HTTPException(404, "PDF não encontrado")
+    cliente_id = pdf.cliente_id
+    filename = pdf.filename
+    db.delete(pdf)
+    # atualiza pdf_path: se ainda houver PDFs, mantém o mais recente; senão limpa
+    restantes = db.query(ClientePdf).filter(ClientePdf.cliente_id == cliente_id).order_by(ClientePdf.created_at.desc()).first()
+    cliente = db.get(Cliente, cliente_id)
+    if cliente:
+        cliente.pdf_path = restantes.filename if restantes else None
+    _log(db, cliente_id, "pdf_enviado",
+         f"{filename} excluído por {current_user.nome}",
+         current_user.id)
+    db.commit()
+    return {"ok": True}
 
 
 # ── Logs do cliente ───────────────────────────────────────────────

@@ -221,6 +221,15 @@ class ClienteOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ── PDFs do cliente ───────────────────────────────────────────────
+class ClientePdfOut(BaseModel):
+    id: int
+    filename: str
+    tamanho: Optional[int]
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
 # ── Logs e Notas ──────────────────────────────────────────────────
 class UsuarioMinOut(BaseModel):
     id: int
