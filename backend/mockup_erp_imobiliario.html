@@ -618,21 +618,46 @@ tbody tr.row-concluido:hover { background: #ecfdf5; }
 }
 
 /* ---- CORRETOR CARD ---- */
-.corretor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px; }
+.corretor-kpi-bar { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+.corretor-kpi-box {
+  background:var(--card); border:1px solid var(--border); border-radius:10px;
+  padding:14px 20px; display:flex; flex-direction:column; gap:2px; min-width:120px;
+}
+.corretor-kpi-box .ck-val { font-size:24px; font-weight:800; color:var(--primary); }
+.corretor-kpi-box .ck-lbl { font-size:11px; color:var(--text-muted); }
+
+.corretor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 14px; }
 .cor-card {
-  background: var(--card); border-radius: 10px; border: 1px solid var(--border); padding: 16px;
-  display: flex; flex-direction: column; gap: 8px;
+  background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 18px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 .cor-card-top { display: flex; align-items: center; gap: 12px; }
 .cor-avatar {
-  width: 42px; height: 42px; border-radius: 50%; background: var(--primary-light);
-  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; font-weight: 700; flex-shrink: 0;
+  width: 46px; height: 46px; border-radius: 50%; background: var(--primary-light);
+  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0;
 }
-.cor-nome { font-size: 14px; font-weight: 700; }
+.cor-nome { font-size: 15px; font-weight: 700; }
 .cor-creci { font-size: 11px; color: var(--text-muted); font-family: monospace; }
-.cor-info  { display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); }
-.cor-info strong { color: var(--primary); font-size: 14px; }
-.cor-actions { display: flex; gap: 6px; margin-top: 4px; }
+.cor-info  { display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); align-items:center; flex-wrap:wrap; }
+.cor-info strong { color: var(--primary); font-size: 18px; font-weight:800; }
+.cor-emp-list { display:flex; flex-direction:column; gap:4px; }
+.cor-emp-row { display:flex; align-items:center; justify-content:space-between; font-size:11px; gap:8px; }
+.cor-emp-row .cor-emp-name { color:var(--text-muted); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cor-emp-row .cor-emp-count { font-weight:700; color:var(--primary); min-width:18px; text-align:right; }
+.cor-emp-bar-wrap { flex:1; height:4px; background:var(--bg); border-radius:99px; overflow:hidden; min-width:40px; }
+.cor-emp-bar { height:100%; background:var(--primary-light); border-radius:99px; transition:width 0.5s; }
+.cor-actions { display: flex; gap: 6px; margin-top: 2px; }
+
+/* Modal KPI corretor */
+.cor-kpi-modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.cor-kpi-modal-box { background:var(--bg); border-radius:8px; padding:10px 14px; }
+.cor-kpi-modal-box .val { font-size:22px; font-weight:800; color:var(--primary); }
+.cor-kpi-modal-box .lbl { font-size:11px; color:var(--text-muted); }
+.cor-cliente-table { width:100%; border-collapse:collapse; font-size:12px; }
+.cor-cliente-table th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--border); color:var(--text-muted); font-weight:600; font-size:11px; }
+.cor-cliente-table td { padding:7px 8px; border-bottom:1px solid var(--border); }
+.cor-cliente-table tr:last-child td { border-bottom:none; }
+.cor-cliente-table tr:hover td { background:var(--bg); }
 
 /* ---- COMISSOES ---- */
 .comissao-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 14px; margin-bottom: 20px; }
@@ -984,7 +1009,7 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     <li><a onclick="nav('base')"><span class="icon">🏆</span> Base</a></li>
     <li><a onclick="nav('chaves')"><span class="icon">🔑</span> Liberar Chaves</a></li>
     <li><a onclick="nav('empreendimentos')"><span class="icon">🏘️</span> Empreendimentos</a></li>
-    <li><a onclick="nav('corretores')"><span class="icon">👤</span> Config. Corretores</a></li>
+    <li><a onclick="nav('corretores')"><span class="icon">👤</span> Corretores</a></li>
     <li data-role="admin"><a onclick="nav('unidades')"><span class="icon">🏙️</span> Unidades / Cidades</a></li>
   </ul>
   <div class="sidebar-section" data-role="admin">Financeiro</div>
@@ -1307,9 +1332,10 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     ====================================================== -->
     <div class="page" id="page-corretores">
       <div class="page-header">
-        <div><h2>Configuração de Corretores</h2><p>Ranking, cadastro e gestão</p></div>
+        <div><h2>Corretores</h2><p>KPIs, ranking e gestão</p></div>
         <button class="btn btn-primary" onclick="abrirModalCorretor()">+ Novo Corretor</button>
       </div>
+      <div class="corretor-kpi-bar" id="corretor-kpi-bar"></div>
       <div class="corretor-grid" id="corretor-grid"></div>
     </div>
 
@@ -1848,6 +1874,52 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-corretor')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarCorretor()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: KPI DETALHADO DO CORRETOR
+=================================================================== -->
+<div class="modal-overlay" id="modal-corretor-kpi">
+  <div class="modal" style="width:680px;max-width:96vw">
+    <div class="modal-header">
+      <div>
+        <h3 id="kpi-cor-titulo">Corretor</h3>
+        <p id="kpi-cor-sub" style="font-size:12px;color:var(--text-muted);margin:0"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-corretor-kpi')">✕</button>
+    </div>
+
+    <!-- KPI boxes -->
+    <div class="cor-kpi-modal-grid" id="kpi-cor-boxes"></div>
+
+    <!-- Breakdown por empreendimento -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Por Empreendimento</div>
+      <div id="kpi-cor-emps" style="display:flex;flex-direction:column;gap:5px;"></div>
+    </div>
+
+    <!-- Lista de clientes -->
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Clientes / Processos</div>
+      <div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+        <table class="cor-cliente-table">
+          <thead>
+            <tr>
+              <th>Nº</th>
+              <th>Cliente</th>
+              <th>Empreendimento</th>
+              <th>Etapa</th>
+            </tr>
+          </thead>
+          <tbody id="kpi-cor-clientes"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-corretor-kpi')">Fechar</button>
     </div>
   </div>
 </div>
@@ -3566,43 +3638,114 @@ async function loadCorretores() {
   try {
     const data = await apiFetch("/corretores");
     const grid = document.getElementById("corretor-grid");
+    const kpiBar = document.getElementById("corretor-kpi-bar");
     if (!grid) return;
+
+    // KPI summary bar
+    const totalClientes = data.reduce((s, c) => s + (c.total_vendas || 0), 0);
+    const media = data.length ? (totalClientes / data.length).toFixed(1) : 0;
+    const top = data[0];
+    if (kpiBar) {
+      kpiBar.innerHTML = `
+        <div class="corretor-kpi-box"><div class="ck-val">${data.length}</div><div class="ck-lbl">Corretores ativos</div></div>
+        <div class="corretor-kpi-box"><div class="ck-val">${totalClientes}</div><div class="ck-lbl">Clientes no total</div></div>
+        <div class="corretor-kpi-box"><div class="ck-val">${media}</div><div class="ck-lbl">Média por corretor</div></div>
+        ${top ? `<div class="corretor-kpi-box"><div class="ck-val" style="font-size:15px;padding-top:2px">${top.nome.split(" ")[0]}</div><div class="ck-lbl">Lider — ${top.total_vendas} clientes</div></div>` : ""}
+      `;
+    }
+
     if (!data.length) {
       grid.innerHTML = `<div style="padding:24px;color:var(--text-muted)">Nenhum corretor cadastrado.</div>`;
       return;
     }
+
     const cls = ["gold","silver","bronze","other","other","other","other","other"];
     const max = data[0]?.total_vendas || 1;
+
     grid.innerHTML = data.map((c, i) => {
       const initials = c.nome.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
-      const pct = max > 0 ? Math.round(c.total_vendas / max * 100) : 0;
+      const pct = max > 0 ? Math.round((c.total_vendas || 0) / max * 100) : 0;
+      const avatarBg = i===0 ? 'var(--warning)' : i===1 ? '#94a3b8' : i===2 ? '#cd7f32' : 'var(--primary-light)';
+      const nomeEsc = c.nome.replace(/'/g, "\\'").replace(/"/g, "&quot;");
       return `
         <div class="cor-card">
           <div class="cor-card-top">
-            <div class="cor-avatar" style="background:${i===0?'var(--warning)':i===1?'#94a3b8':i===2?'#cd7f32':'var(--primary-light)'}">${initials}</div>
+            <div class="cor-avatar" style="background:${avatarBg}">${initials}</div>
             <div style="flex:1;min-width:0">
               <div class="cor-nome">${c.nome}</div>
               <div class="cor-creci">CRECI: ${c.creci || "—"}</div>
+              ${c.telefone ? `<div style="font-size:11px;color:var(--text-muted);margin-top:1px">📱 ${c.telefone}</div>` : ""}
             </div>
-            <div class="rank-pos ${cls[i]||'other'}" style="width:26px;height:26px;font-size:12px">${i+1}</div>
+            <div class="rank-pos ${cls[i]||'other'}" style="width:28px;height:28px;font-size:12px">${i+1}</div>
           </div>
+
           <div class="cor-info">
-            <div><strong>${c.total_vendas}</strong> vendas</div>
-            ${c.telefone ? `<div>📱 ${c.telefone}</div>` : ""}
+            <div><strong>${c.total_vendas || 0}</strong> clientes</div>
           </div>
+
+          <!-- barra de ranking -->
           <div style="height:5px;background:var(--bg);border-radius:99px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:var(--primary-light);border-radius:99px;transition:width 0.6s"></div>
+            <div style="height:100%;width:${pct}%;background:${avatarBg};border-radius:99px;transition:width 0.6s"></div>
           </div>
+
           <div class="cor-actions">
-            <button class="btn btn-outline btn-sm" style="flex:1" onclick="abrirModalCorretor(${c.id},'${c.nome.replace(/'/g,"\'")}','${c.creci||""}','${c.telefone||""}')">✏️ Editar</button>
-            <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="desativarCorretor(${c.id},'${c.nome.replace(/'/g,"\'")}')">Desativar</button>
+            <button class="btn btn-outline btn-sm" style="flex:1" onclick="verKpiCorretor(${c.id})">📊 Ver Clientes</button>
+            <button class="btn btn-outline btn-sm" onclick="abrirModalCorretor(${c.id},'${nomeEsc}','${c.creci||""}','${c.telefone||""}')">✏️</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="desativarCorretor(${c.id},'${nomeEsc}')">🗑️</button>
           </div>
         </div>`;
     }).join("");
   } catch(e) {
     console.error("Erro ao carregar corretores:", e.message);
-    const el = document.getElementById("ranking-full");
-    if (el) el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-muted)">Erro ao carregar corretores.</div>`;
+  }
+}
+
+async function verKpiCorretor(id) {
+  try {
+    const d = await apiFetch(`/corretores/${id}/kpi`);
+
+    document.getElementById("kpi-cor-titulo").textContent = d.corretor.nome;
+    document.getElementById("kpi-cor-sub").textContent =
+      [d.corretor.creci ? `CRECI ${d.corretor.creci}` : null, d.corretor.telefone || null]
+      .filter(Boolean).join("  •  ");
+
+    // KPI boxes
+    const stepAtivos = d.por_etapa.filter(e => e.step !== "concluido" && e.step !== "entrega_chave");
+    const emConcluido = (d.por_etapa.find(e => e.step === "concluido") || {}).total || 0;
+    document.getElementById("kpi-cor-boxes").innerHTML = `
+      <div class="cor-kpi-modal-box"><div class="val">${d.total_clientes}</div><div class="lbl">Clientes no total</div></div>
+      <div class="cor-kpi-modal-box"><div class="val">${emConcluido}</div><div class="lbl">Concluídos</div></div>
+      <div class="cor-kpi-modal-box"><div class="val">${d.por_empreendimento.length}</div><div class="lbl">Empreendimentos</div></div>
+      <div class="cor-kpi-modal-box"><div class="val">${d.total_clientes - emConcluido}</div><div class="lbl">Em andamento</div></div>
+    `;
+
+    // Breakdown empreendimentos
+    const maxEmp = d.por_empreendimento[0]?.total || 1;
+    document.getElementById("kpi-cor-emps").innerHTML = d.por_empreendimento.length
+      ? d.por_empreendimento.map(e => `
+          <div class="cor-emp-row">
+            <div class="cor-emp-name">${e.empreendimento}</div>
+            <div class="cor-emp-bar-wrap"><div class="cor-emp-bar" style="width:${Math.round(e.total/maxEmp*100)}%"></div></div>
+            <div class="cor-emp-count">${e.total}</div>
+          </div>`).join("")
+      : `<div style="font-size:12px;color:var(--text-muted)">Nenhum cliente vinculado.</div>`;
+
+    // Tabela de clientes
+    const wfColors = { engenharia:"#6366f1", aprovacao:"#3b82f6", documentacao:"#f59e0b",
+      siktd:"#8b5cf6", cartorio:"#ef4444", entrega_chave:"#f97316", concluido:"#10b981" };
+    document.getElementById("kpi-cor-clientes").innerHTML = d.clientes.length
+      ? d.clientes.map(c => `
+          <tr>
+            <td style="font-family:monospace;color:var(--text-muted)">${c.num_ordem}</td>
+            <td style="font-weight:600">${c.nome}</td>
+            <td style="color:var(--text-muted)">${c.empreendimento}</td>
+            <td><span style="background:${wfColors[c.workflow_step]||'#6b7280'}20;color:${wfColors[c.workflow_step]||'#6b7280'};padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600">${c.workflow_label}</span></td>
+          </tr>`).join("")
+      : `<tr><td colspan="4" style="padding:16px;color:var(--text-muted);text-align:center">Nenhum cliente.</td></tr>`;
+
+    document.getElementById("modal-corretor-kpi").classList.add("open");
+  } catch(e) {
+    showToast("Erro ao carregar KPI: " + e.message, "");
   }
 }
 
