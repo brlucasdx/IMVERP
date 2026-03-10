@@ -10,8 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Instalar PostgreSQL client
-        run: sudo apt-get install -y postgresql-client
+      - name: Instalar PostgreSQL 17 client
+        run: |
+          sudo apt-get install -y curl ca-certificates
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
 
       - name: Instalar rclone
         run: curl https://rclone.org/install.sh | sudo bash
@@ -21,12 +27,7 @@ jobs:
           RCLONE_TOKEN: ${{ secrets.RCLONE_TOKEN }}
         run: |
           mkdir -p ~/.config/rclone
-          cat > ~/.config/rclone/rclone.conf << EOF
-          [IMVERP-BANCO]
-          type = drive
-          scope = drive
-          token = ${RCLONE_TOKEN}
-          EOF
+          printf '[IMVERP-BANCO]\ntype = drive\nscope = drive\ntoken = %s\n' "$RCLONE_TOKEN" > ~/.config/rclone/rclone.conf
 
       - name: Fazer pg_dump do Railway
         env:
