@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.database import get_db
-from app.models import Usuario, TipoUsuario
+from app.models import Usuario, TipoUsuario, Analista
 from app.auth import (
     verify_password, hash_password, create_access_token,
     get_current_user, require_admin,
@@ -114,6 +114,15 @@ def criar_usuario(
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # Operadores ganham comissão por processo → garantir registro em analistas
+    if data.tipo == TipoUsuario.operador:
+        ja_existe = db.query(Analista).filter(Analista.nome == data.nome.strip()).first()
+        if not ja_existe:
+            analista = Analista(nome=data.nome.strip(), email=data.email.lower().strip())
+            db.add(analista)
+            db.commit()
+
     return user
 
 

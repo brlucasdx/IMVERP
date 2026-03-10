@@ -74,11 +74,13 @@ class Empreendimento(Base):
 class Corretor(Base):
     __tablename__ = "corretores"
 
-    id       = Column(Integer, primary_key=True, index=True)
-    nome     = Column(String(120), nullable=False)
-    creci    = Column(String(30))
-    telefone = Column(String(20))
-    ativo    = Column(Boolean, default=True)
+    id                 = Column(Integer, primary_key=True, index=True)
+    nome               = Column(String(120), nullable=False)
+    creci              = Column(String(30))
+    telefone           = Column(String(20))
+    ativo              = Column(Boolean, default=True)
+    comissao_por_venda = Column(Numeric(8, 2), default=100.00)  # R$ por venda assinada
+    meta_mensal_vendas = Column(Integer, default=10)             # meta de vendas/mês
 
     clientes = relationship("Cliente", back_populates="corretor")
 

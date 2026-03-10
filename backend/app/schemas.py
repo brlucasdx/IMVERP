@@ -352,6 +352,23 @@ class ComissoesOut(BaseModel):
     total_comissoes: Decimal
 
 
+class ComissaoCorretor(BaseModel):
+    corretor_id: int
+    nome: str
+    meta_mensal: int
+    comissao_por_venda: Decimal
+    vendas_mes: int
+    valor_acumulado: Decimal
+    percentual_meta: float
+    status_meta: str             # "abaixo" | "ok" | "superou"
+
+class ComissoesCorretoresOut(BaseModel):
+    mes_referencia: str
+    corretores: list[ComissaoCorretor]
+    total_vendas_mes: int
+    total_comissoes: Decimal
+
+
 # ── Lançamentos manuais de comissão ───────────────────────────────
 class LancamentoCreate(BaseModel):
     analista_id: int

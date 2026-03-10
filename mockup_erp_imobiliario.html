@@ -356,7 +356,7 @@ tbody tr.row-concluido:hover { background: #ecfdf5; }
 .det-tab:hover { color:var(--primary); }
 .det-tab.active { color:var(--primary);border-bottom-color:var(--primary); }
 .det-tab-content { display:none; }
-.det-tab-content.active { display:block; }
+.det-tab-content.active { display:block; padding-top:20px; }
 
 /* ── Notas ── */
 .notas-wrap { padding:20px 24px; }
@@ -878,9 +878,12 @@ tbody tr.row-concluido:hover { background: #ecfdf5; }
 }
 .wf-premium-step.done .wf-premium-label    { color:var(--success); }
 .wf-premium-step.current .wf-premium-label { color:var(--primary); font-size:11px; }
-.wf-premium-date { font-size:9px; text-align:center; min-height:13px; white-space:nowrap; color:var(--text-muted); }
-.wf-premium-step.done .wf-premium-date    { color:#059669; font-weight:600; }
-.wf-premium-step.current .wf-premium-date { color:var(--primary-light); font-weight:600; }
+.wf-premium-date { font-size:10px; text-align:center; min-height:14px; white-space:nowrap; color:var(--text-muted); }
+.wf-premium-step.done .wf-premium-date    { color:#059669; font-weight:700; }
+.wf-premium-step.current .wf-premium-date { color:var(--primary); font-weight:700; }
+.wf-premium-step.clickable { cursor:pointer; }
+.wf-premium-step.clickable:hover .wf-premium-circle { transform:scale(1.12); box-shadow:0 0 0 3px #bfdbfe; transition:all .15s; }
+.wf-premium-step.clickable.current:hover .wf-premium-circle { box-shadow:0 0 0 3px #93c5fd; }
 /* Card da etapa atual */
 .wf-current-card {
   margin-top:16px; padding:14px 18px;
@@ -1727,16 +1730,42 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     ====================================================== -->
     <div class="page" id="page-comissoes">
       <div class="page-header">
-        <div><h2>💰 Comissões</h2><p>Auto-calculado por assinaturas + lançamentos manuais</p></div>
+        <div><h2>💰 Comissões</h2><p>Operadores por processo · Corretores por venda</p></div>
         <div class="actions">
           <select class="filter-select" id="sel-mes-comissao" onchange="loadComissoes()"></select>
           <button class="btn btn-primary" onclick="abrirModalLancamento()">+ Lançamento Manual</button>
         </div>
       </div>
-      <!-- Cards auto-calculados -->
-      <div class="comissao-grid" id="comissao-grid"></div>
+
+      <!-- Operadores -->
+      <div class="section-card" style="margin-bottom:20px;padding:18px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-size:20px">👔</span>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:15px">Operadores</div>
+            <div style="font-size:11px;color:var(--text-muted)">Comissão por processo assinado</div>
+          </div>
+          <div id="comissao-resumo-op" style="font-size:12px;color:var(--text-muted);text-align:right"></div>
+        </div>
+        <div class="comissao-grid" id="comissao-grid"></div>
+      </div>
+
+      <!-- Corretores -->
+      <div class="section-card" style="margin-bottom:20px;padding:18px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-size:20px">🏘️</span>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:15px">Corretores</div>
+            <div style="font-size:11px;color:var(--text-muted)">Comissão por venda realizada</div>
+          </div>
+          <div id="comissao-resumo-cor" style="font-size:12px;color:var(--text-muted);text-align:right"></div>
+        </div>
+        <div class="comissao-grid" id="comissao-grid-cor"></div>
+      </div>
+
       <!-- Resumo total -->
       <div class="section-card" style="padding:18px;margin-bottom:16px" id="comissao-resumo"></div>
+
       <!-- Lançamentos manuais -->
       <div class="section-card" id="lancamentos-section">
         <div class="section-header">
@@ -4520,54 +4549,88 @@ async function loadComissoes() {
   const [ano, mes] = _getMesComissao();
   const qs = ano ? `?ano=${ano}&mes=${mes}` : "";
   try {
-    const [data, lancamentos] = await Promise.all([
+    const [data, dataCorretores, lancamentos] = await Promise.all([
       apiFetch(`/comissoes${qs}`),
+      apiFetch(`/comissoes/corretores${qs}`),
       apiFetch(`/comissoes/lancamentos${qs}`),
     ]);
 
-    // ── Cards auto-calculados ──
+    // ── Operadores (analistas) ──
     const grid = document.getElementById("comissao-grid");
     if (grid) {
-      grid.innerHTML = data.analistas.map(a => {
+      grid.innerHTML = data.analistas.length ? data.analistas.map(a => {
         const pct  = Math.min(a.percentual_meta, 100);
         const st   = a.status_meta;
         const cor  = st==="superou"?"var(--info)":st==="ok"?"var(--success)":"var(--danger)";
         const txtMeta = st==="superou"?"🏆 Superou a meta!":st==="ok"?"✓ Meta atingida":"↓ Abaixo da meta";
-        // lançamentos extras deste analista
         const extras = lancamentos.filter(l => l.analista_id === a.analista_id);
         const totalExtra = extras.reduce((s,l) => s + Number(l.valor), 0);
         const totalGeral = Number(a.valor_acumulado) + totalExtra;
         return `
           <div class="comissao-card ${st}">
             <div class="comissao-nome">${a.nome}</div>
-            <div class="comissao-sub">Meta: ${a.meta_mensal} casas/mês · R$ ${Number(a.comissao_por_casa).toFixed(2).replace(".",",")} / casa</div>
+            <div class="comissao-sub">Meta: ${a.meta_mensal} processos/mês · R$ ${Number(a.comissao_por_casa).toFixed(2).replace(".",",")} / processo</div>
             <div class="comissao-val">R$ ${totalGeral.toFixed(2).replace(".",",")}<small> total do mês</small></div>
             <div style="font-size:11px;color:var(--text-muted);margin:2px 0 8px">
-              Assinaturas: R$ ${Number(a.valor_acumulado).toFixed(2).replace(".",",")}
+              Processos: R$ ${Number(a.valor_acumulado).toFixed(2).replace(".",",")}
               ${totalExtra ? ` + Extras: R$ ${totalExtra.toFixed(2).replace(".",",")}` : ""}
             </div>
             <div class="comissao-meta">
               <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
-                <span><strong>${a.casas_assinadas_mes}</strong> casas assinadas</span>
+                <span><strong>${a.casas_assinadas_mes}</strong> processos assinados</span>
                 <span style="font-weight:700;color:${cor}">${a.percentual_meta.toFixed(0)}% da meta</span>
               </div>
               <div class="meta-track"><div class="meta-fill ${st}" style="width:${pct}%"></div></div>
             </div>
             <div style="margin-top:8px;font-size:11px;font-weight:600;color:${cor}">${txtMeta}</div>
           </div>`;
-      }).join("");
+      }).join("") : `<div style="color:var(--text-muted);font-size:13px;padding:10px 0">Nenhum operador cadastrado.</div>`;
+
+      const resumoOp = document.getElementById("comissao-resumo-op");
+      if (resumoOp) resumoOp.innerHTML = `<strong>${data.total_assinaturas_mes}</strong> processos &nbsp;·&nbsp; <strong style="color:var(--success)">R$ ${Number(data.total_comissoes).toFixed(2).replace(".",",")}</strong>`;
     }
 
-    // ── Resumo ──
+    // ── Corretores ──
+    const gridCor = document.getElementById("comissao-grid-cor");
+    if (gridCor) {
+      gridCor.innerHTML = dataCorretores.corretores.length ? dataCorretores.corretores.map(c => {
+        const pct  = Math.min(c.percentual_meta, 100);
+        const st   = c.status_meta;
+        const cor  = st==="superou"?"var(--info)":st==="ok"?"var(--success)":"var(--danger)";
+        const txtMeta = st==="superou"?"🏆 Superou a meta!":st==="ok"?"✓ Meta atingida":"↓ Abaixo da meta";
+        return `
+          <div class="comissao-card ${st}">
+            <div class="comissao-nome">${c.nome}</div>
+            <div class="comissao-sub">Meta: ${c.meta_mensal} vendas/mês · R$ ${Number(c.comissao_por_venda).toFixed(2).replace(".",",")} / venda</div>
+            <div class="comissao-val">R$ ${Number(c.valor_acumulado).toFixed(2).replace(".",",")}<small> total do mês</small></div>
+            <div class="comissao-meta">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                <span><strong>${c.vendas_mes}</strong> vendas assinadas</span>
+                <span style="font-weight:700;color:${cor}">${c.percentual_meta.toFixed(0)}% da meta</span>
+              </div>
+              <div class="meta-track"><div class="meta-fill ${st}" style="width:${pct}%"></div></div>
+            </div>
+            <div style="margin-top:8px;font-size:11px;font-weight:600;color:${cor}">${txtMeta}</div>
+          </div>`;
+      }).join("") : `<div style="color:var(--text-muted);font-size:13px;padding:10px 0">Nenhum corretor cadastrado.</div>`;
+
+      const resumoCor = document.getElementById("comissao-resumo-cor");
+      if (resumoCor) resumoCor.innerHTML = `<strong>${dataCorretores.total_vendas_mes}</strong> vendas &nbsp;·&nbsp; <strong style="color:var(--success)">R$ ${Number(dataCorretores.total_comissoes).toFixed(2).replace(".",",")}</strong>`;
+    }
+
+    // ── Resumo geral ──
     const totalExtras = lancamentos.reduce((s,l) => s + Number(l.valor), 0);
+    const totalGeral = Number(data.total_comissoes) + Number(dataCorretores.total_comissoes) + totalExtras;
     const resumo = document.getElementById("comissao-resumo");
     if (resumo) resumo.innerHTML = `
       <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
         <div><div style="font-size:11px;color:var(--text-muted)">Mês</div><div style="font-size:16px;font-weight:700">${data.mes_referencia}</div></div>
-        <div><div style="font-size:11px;color:var(--text-muted)">Assinaturas</div><div style="font-size:20px;font-weight:800;color:var(--primary)">${data.total_assinaturas_mes}</div></div>
-        <div><div style="font-size:11px;color:var(--text-muted)">Comissões auto</div><div style="font-size:20px;font-weight:800;color:var(--success)">R$ ${Number(data.total_comissoes).toFixed(2).replace(".",",")}</div></div>
-        ${totalExtras ? `<div><div style="font-size:11px;color:var(--text-muted)">Lançamentos manuais</div><div style="font-size:20px;font-weight:800;color:var(--info)">R$ ${totalExtras.toFixed(2).replace(".",",")}</div></div>` : ""}
-        <div><div style="font-size:11px;color:var(--text-muted)">Total geral</div><div style="font-size:20px;font-weight:800;color:var(--warning)">R$ ${(Number(data.total_comissoes)+totalExtras).toFixed(2).replace(".",",")}</div></div>
+        <div><div style="font-size:11px;color:var(--text-muted)">Processos (operadores)</div><div style="font-size:20px;font-weight:800;color:var(--primary)">${data.total_assinaturas_mes}</div></div>
+        <div><div style="font-size:11px;color:var(--text-muted)">Operadores</div><div style="font-size:20px;font-weight:800;color:var(--success)">R$ ${Number(data.total_comissoes).toFixed(2).replace(".",",")}</div></div>
+        <div><div style="font-size:11px;color:var(--text-muted)">Vendas (corretores)</div><div style="font-size:20px;font-weight:800;color:var(--primary)">${dataCorretores.total_vendas_mes}</div></div>
+        <div><div style="font-size:11px;color:var(--text-muted)">Corretores</div><div style="font-size:20px;font-weight:800;color:var(--info)">R$ ${Number(dataCorretores.total_comissoes).toFixed(2).replace(".",",")}</div></div>
+        ${totalExtras ? `<div><div style="font-size:11px;color:var(--text-muted)">Lançamentos manuais</div><div style="font-size:20px;font-weight:800;color:var(--warning)">R$ ${totalExtras.toFixed(2).replace(".",",")}</div></div>` : ""}
+        <div><div style="font-size:11px;color:var(--text-muted)">Total geral</div><div style="font-size:24px;font-weight:900;color:var(--primary)">R$ ${totalGeral.toFixed(2).replace(".",",")}</div></div>
       </div>`;
 
     // ── Lançamentos manuais ──
@@ -4578,7 +4641,7 @@ async function loadComissoes() {
       } else {
         ll.innerHTML = `<table style="width:100%;border-collapse:collapse">
           <thead><tr style="font-size:11px;color:var(--text-muted);text-transform:uppercase;border-bottom:1px solid var(--border)">
-            <th style="padding:8px 4px;text-align:left">Analista</th>
+            <th style="padding:8px 4px;text-align:left">Pessoa</th>
             <th style="padding:8px 4px;text-align:left">Descrição</th>
             <th style="padding:8px 4px;text-align:right">Valor</th>
             <th style="padding:8px 4px;text-align:center">Status</th>
@@ -4922,6 +4985,7 @@ async function verCliente(id) {
       c.chave_liberada ? "Chave entregue ao cliente" : "Aguardando entrega da chave",
       c.doc_recebido ? "Garantia recebida ✓" : "Processo encerrado",
     ];
+    const fmtD = d => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "";
     const _created = c.created_at ? c.created_at.slice(0, 10) : null;
     const WFDATES = [_created, c.data_assinatura, null, c.data_siktd_ok, c.data_cartorio_envio, c.data_chave_liberada, c.data_doc_recebido];
     const curIdx = WFKEYS.indexOf(c.workflow_step);
@@ -4932,12 +4996,17 @@ async function verCliente(id) {
       const icon = i < curIdx ? "✓" : WFICONS[i];
       let dtContent = "";
       if (WFDATES[i]) {
-        dtContent = WFDATES[i];
+        dtContent = fmtD(WFDATES[i]);
       } else if (i === curIdx) {
         dtContent = "em andamento";
       }
       const dt = `<div class="wf-premium-date">${dtContent}</div>`;
-      return `<div class="wf-premium-step ${cls}">
+      // entrega_chave é gerenciada automaticamente ao liberar chave
+      const isClickable = k !== "entrega_chave";
+      const clickAttr = isClickable
+        ? `onclick="alterarWorkflowStep(${c.id},'${k}','${WFLBLS[i]}')" title="Alterar para ${WFLBLS[i]}"`
+        : `title="Definida automaticamente ao liberar a chave"`;
+      return `<div class="wf-premium-step ${cls}${isClickable ? " clickable" : ""}" ${clickAttr}>
         <div class="wf-premium-circle">${icon}</div>
         <div class="wf-premium-label">${WFLBLS[i]}</div>
         ${dt}
@@ -5124,6 +5193,18 @@ async function liberarChaveDetalhe(clienteId) {
     showToast("Chave liberada!", "ok");
     closeModal("modal-detalhe");
     loadClientes();
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+  }
+}
+
+async function alterarWorkflowStep(clienteId, stepKey, stepLabel) {
+  if (!confirm(`Alterar etapa do processo para "${stepLabel}"?`)) return;
+  try {
+    await apiFetch(`/clientes/${clienteId}`, { method: "PUT", body: JSON.stringify({ workflow_step: stepKey }) });
+    showToast(`Workflow → ${stepLabel}`, "ok");
+    loadClientes();
+    await verCliente(clienteId);
   } catch(e) {
     showToast("Erro: " + e.message, "");
   }

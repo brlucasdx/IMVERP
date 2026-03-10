@@ -6,8 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db
-from app.models import Analista, Cliente, ComissaoLancamento
-from app.schemas import ComissaoAnalista, ComissoesOut, LancamentoCreate, LancamentoOut
+from app.models import Analista, Cliente, ComissaoLancamento, Corretor
+from app.schemas import (
+    ComissaoAnalista, ComissoesOut, LancamentoCreate, LancamentoOut,
+    ComissaoCorretor, ComissoesCorretoresOut,
+)
 
 router = APIRouter(prefix="/api/comissoes", tags=["Comissoes"])
 router.dependencies.append(Depends(get_current_user))
@@ -82,6 +85,69 @@ def get_comissoes(
         mes_referencia=mes_referencia,
         analistas=resultado,
         total_assinaturas_mes=total_assinaturas,
+        total_comissoes=total_comissoes,
+    )
+
+
+@router.get("/corretores", response_model=ComissoesCorretoresOut)
+def get_comissoes_corretores(
+    ano: int = Query(default=None),
+    mes: int = Query(default=None, ge=1, le=12),
+    db: Session = Depends(get_db),
+):
+    hoje = date.today()
+    ano = ano or hoje.year
+    mes = mes or hoje.month
+    mes_referencia = f"{ano:04d}-{mes:02d}"
+    inicio = date(ano, mes, 1)
+    fim = date(ano, mes + 1, 1) if mes < 12 else date(ano + 1, 1, 1)
+
+    corretores = db.query(Corretor).filter(Corretor.ativo == True).all()
+    resultado: list[ComissaoCorretor] = []
+    total_vendas = 0
+    total_comissoes = Decimal("0.00")
+
+    for cor in corretores:
+        vendas = (
+            db.query(Cliente)
+            .filter(
+                Cliente.corretor_id == cor.id,
+                Cliente.data_assinatura.isnot(None),
+                Cliente.data_assinatura >= inicio,
+                Cliente.data_assinatura < fim,
+            )
+            .count()
+        )
+        comissao_unit = cor.comissao_por_venda or Decimal("100.00")
+        meta = cor.meta_mensal_vendas or 10
+        valor_acumulado = comissao_unit * vendas
+
+        if vendas == 0:
+            pct = 0.0
+            status_meta = "abaixo"
+        else:
+            pct = round((vendas / meta) * 100, 1)
+            status_meta = "superou" if vendas > meta else ("ok" if vendas == meta else "abaixo")
+
+        total_vendas += vendas
+        total_comissoes += valor_acumulado
+
+        resultado.append(ComissaoCorretor(
+            corretor_id=cor.id,
+            nome=cor.nome,
+            meta_mensal=meta,
+            comissao_por_venda=comissao_unit,
+            vendas_mes=vendas,
+            valor_acumulado=valor_acumulado,
+            percentual_meta=pct,
+            status_meta=status_meta,
+        ))
+
+    resultado.sort(key=lambda x: x.vendas_mes, reverse=True)
+    return ComissoesCorretoresOut(
+        mes_referencia=mes_referencia,
+        corretores=resultado,
+        total_vendas_mes=total_vendas,
         total_comissoes=total_comissoes,
     )
 
