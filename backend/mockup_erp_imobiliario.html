@@ -658,6 +658,41 @@ tbody tr.row-concluido:hover { background: #ecfdf5; }
 .cor-cliente-table td { padding:7px 8px; border-bottom:1px solid var(--border); }
 .cor-cliente-table tr:last-child td { border-bottom:none; }
 .cor-cliente-table tr:hover td { background:var(--bg); }
+.cor-cliente-table tr.clickable-row { cursor:pointer; }
+
+/* Chips de empreendimento no card */
+.cor-emp-chips { display:flex; flex-wrap:wrap; gap:4px; }
+.cor-emp-chip {
+  font-size:10px; padding:2px 7px; border-radius:99px;
+  background:var(--bg); border:1px solid var(--border);
+  color:var(--text-muted); white-space:nowrap; max-width:120px;
+  overflow:hidden; text-overflow:ellipsis;
+}
+/* Stats concluido/andamento */
+.cor-stats { display:flex; gap:10px; font-size:11px; }
+.cor-stat-ok  { color:#10b981; font-weight:700; }
+.cor-stat-run { color:var(--primary); font-weight:700; }
+
+/* Destaque visual top-3 */
+.cor-card.rank-1 { border-top:3px solid #f5c518; }
+.cor-card.rank-2 { border-top:3px solid #94a3b8; }
+.cor-card.rank-3 { border-top:3px solid #cd7f32; }
+
+/* Barra de busca e toggle de view */
+.cor-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.cor-toolbar .form-input { flex:1; min-width:180px; max-width:320px; }
+.view-toggle { display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.view-toggle button { padding:6px 14px; border:none; background:var(--card); color:var(--text-muted); cursor:pointer; font-size:13px; }
+.view-toggle button.active { background:var(--primary); color:#fff; }
+
+/* Tabela de corretores */
+.cor-table { width:100%; border-collapse:collapse; font-size:13px; }
+.cor-table th { text-align:left; padding:8px 10px; border-bottom:2px solid var(--border); color:var(--text-muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
+.cor-table td { padding:10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+.cor-table tr:last-child td { border-bottom:none; }
+.cor-table tr:hover td { background:var(--bg); }
+.cor-table .td-rank { width:36px; text-align:center; }
+.cor-table .td-actions { white-space:nowrap; }
 
 /* ---- COMISSOES ---- */
 .comissao-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 14px; margin-bottom: 20px; }
@@ -1336,7 +1371,30 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
         <button class="btn btn-primary" onclick="abrirModalCorretor()">+ Novo Corretor</button>
       </div>
       <div class="corretor-kpi-bar" id="corretor-kpi-bar"></div>
+      <div class="cor-toolbar">
+        <input class="form-input" id="cor-busca" placeholder="🔍 Buscar corretor..." oninput="filtrarCorretores()" style="max-width:280px">
+        <div class="view-toggle">
+          <button id="cor-view-cards" class="active" onclick="setCorView('cards')" title="Cards">⊞ Cards</button>
+          <button id="cor-view-table" onclick="setCorView('table')" title="Tabela">☰ Tabela</button>
+        </div>
+        <span id="cor-count" style="font-size:12px;color:var(--text-muted)"></span>
+      </div>
       <div class="corretor-grid" id="corretor-grid"></div>
+      <div id="corretor-table-wrap" style="display:none;background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden">
+        <table class="cor-table"><thead><tr>
+          <th class="td-rank">#</th>
+          <th>Corretor</th>
+          <th>CRECI</th>
+          <th>Telefone</th>
+          <th>Empreendimentos</th>
+          <th>Clientes</th>
+          <th>Concluídos</th>
+          <th>Em andamento</th>
+          <th class="td-actions">Ações</th>
+        </tr></thead>
+        <tbody id="corretor-tbody"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- =====================================================
@@ -1902,7 +1960,10 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
 
     <!-- Lista de clientes -->
     <div>
-      <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Clientes / Processos</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Clientes / Processos</div>
+        <div style="font-size:11px;color:var(--text-muted)">↩ clique numa linha para abrir o processo</div>
+      </div>
       <div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
         <table class="cor-cliente-table">
           <thead>
@@ -3634,67 +3695,154 @@ async function desativarCorretor(id, nome) {
   } catch(e) { showToast("Erro: " + e.message, ""); }
 }
 
+let _corretoresData = [];
+let _corView = "cards";
+
+function setCorView(v) {
+  _corView = v;
+  document.getElementById("cor-view-cards").classList.toggle("active", v === "cards");
+  document.getElementById("cor-view-table").classList.toggle("active", v === "table");
+  document.getElementById("corretor-grid").style.display       = v === "cards" ? "" : "none";
+  document.getElementById("corretor-table-wrap").style.display = v === "table" ? "" : "none";
+  renderCorretores(_getCorretoresFiltrados());
+}
+
+function filtrarCorretores() { renderCorretores(_getCorretoresFiltrados()); }
+
+function _getCorretoresFiltrados() {
+  const q = (document.getElementById("cor-busca")?.value || "").toLowerCase().trim();
+  return q ? _corretoresData.filter(c => c.nome.toLowerCase().includes(q)) : _corretoresData;
+}
+
+function renderCorretores(data) {
+  const count = document.getElementById("cor-count");
+  if (count) count.textContent = data.length !== _corretoresData.length ? `${data.length} de ${_corretoresData.length}` : "";
+
+  if (_corView === "cards") _renderCards(data);
+  else _renderTable(data);
+}
+
+function _rankClass(i) { return i===0?"rank-1":i===1?"rank-2":i===2?"rank-3":""; }
+const _rankColors = ["var(--warning)","#94a3b8","#cd7f32","var(--primary-light)"];
+const _clsMap     = ["gold","silver","bronze","other"];
+
+function _renderCards(data) {
+  const grid = document.getElementById("corretor-grid");
+  if (!grid) return;
+  if (!data.length) {
+    grid.innerHTML = `<div style="padding:24px;color:var(--text-muted)">Nenhum corretor encontrado.</div>`;
+    return;
+  }
+  const max = data[0]?.total_vendas || 1;
+  // índice real (para ranking) mapeia pelo id
+  const rankIdx = {};
+  _corretoresData.forEach((c, i) => { rankIdx[c.id] = i; });
+
+  grid.innerHTML = data.map(c => {
+    const i = rankIdx[c.id] ?? 99;
+    const initials  = c.nome.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
+    const pct       = max > 0 ? Math.round((c.total_vendas||0)/max*100) : 0;
+    const bg        = _rankColors[Math.min(i,3)];
+    const nomeEsc   = c.nome.replace(/'/g,"\\'").replace(/"/g,"&quot;");
+    const empChips  = (c.empreendimentos||[]).map(e =>
+      `<span class="cor-emp-chip" title="${e.nome}">${e.nome} <b>${e.total}</b></span>`).join("");
+    const pctConc   = c.total_vendas ? Math.round(c.concluidos/c.total_vendas*100) : 0;
+
+    return `
+      <div class="cor-card ${_rankClass(i)}">
+        <div class="cor-card-top">
+          <div class="cor-avatar" style="background:${bg}">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div class="cor-nome">${c.nome}</div>
+            <div class="cor-creci">CRECI: ${c.creci||"—"}</div>
+            ${c.telefone?`<div style="font-size:11px;color:var(--text-muted);margin-top:1px">📱 ${c.telefone}</div>`:""}
+          </div>
+          <div class="rank-pos ${_clsMap[Math.min(i,3)]}" style="width:28px;height:28px;font-size:12px">${i+1}</div>
+        </div>
+
+        ${empChips ? `<div class="cor-emp-chips">${empChips}</div>` : ""}
+
+        <div class="cor-stats">
+          <div><span class="cor-stat-run">${c.em_andamento}</span> em andamento</div>
+          <div><span class="cor-stat-ok">${c.concluidos}</span> concluídos</div>
+        </div>
+
+        <div style="height:5px;background:var(--bg);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${bg};border-radius:99px;transition:width 0.6s"></div>
+        </div>
+
+        <div class="cor-actions">
+          <button class="btn btn-outline btn-sm" style="flex:1" onclick="verKpiCorretor(${c.id})">📊 Ver Clientes</button>
+          <button class="btn btn-outline btn-sm" onclick="abrirModalCorretor(${c.id},'${nomeEsc}','${c.creci||""}','${c.telefone||""}')">✏️</button>
+          <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="desativarCorretor(${c.id},'${nomeEsc}')">🗑️</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function _renderTable(data) {
+  const tbody = document.getElementById("corretor-tbody");
+  if (!tbody) return;
+  const rankIdx = {};
+  _corretoresData.forEach((c, i) => { rankIdx[c.id] = i; });
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--text-muted)">Nenhum corretor encontrado.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(c => {
+    const i = rankIdx[c.id] ?? 99;
+    const initials = c.nome.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
+    const bg = _rankColors[Math.min(i,3)];
+    const nomeEsc = c.nome.replace(/'/g,"\\'").replace(/"/g,"&quot;");
+    const emps = (c.empreendimentos||[]).map(e=>`<span class="cor-emp-chip">${e.nome}</span>`).join(" ");
+    return `
+      <tr>
+        <td class="td-rank"><div class="rank-pos ${_clsMap[Math.min(i,3)]}" style="width:24px;height:24px;font-size:11px;margin:auto">${i+1}</div></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="cor-avatar" style="background:${bg};width:32px;height:32px;font-size:12px">${initials}</div>
+            <span style="font-weight:600">${c.nome}</span>
+          </div>
+        </td>
+        <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">${c.creci||"—"}</td>
+        <td style="font-size:12px">${c.telefone||"—"}</td>
+        <td><div style="display:flex;flex-wrap:wrap;gap:3px">${emps||"—"}</div></td>
+        <td style="text-align:center;font-weight:700">${c.total_vendas}</td>
+        <td style="text-align:center;color:#10b981;font-weight:700">${c.concluidos}</td>
+        <td style="text-align:center;color:var(--primary);font-weight:700">${c.em_andamento}</td>
+        <td class="td-actions">
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-outline btn-sm" onclick="verKpiCorretor(${c.id})">📊</button>
+            <button class="btn btn-outline btn-sm" onclick="abrirModalCorretor(${c.id},'${nomeEsc}','${c.creci||""}','${c.telefone||""}')">✏️</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="desativarCorretor(${c.id},'${nomeEsc}')">🗑️</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join("");
+}
+
 async function loadCorretores() {
   try {
     const data = await apiFetch("/corretores");
-    const grid = document.getElementById("corretor-grid");
-    const kpiBar = document.getElementById("corretor-kpi-bar");
-    if (!grid) return;
+    _corretoresData = data;
 
-    // KPI summary bar
-    const totalClientes = data.reduce((s, c) => s + (c.total_vendas || 0), 0);
-    const media = data.length ? (totalClientes / data.length).toFixed(1) : 0;
+    const kpiBar = document.getElementById("corretor-kpi-bar");
+    const totalClientes = data.reduce((s,c) => s+(c.total_vendas||0), 0);
+    const totalConcluidos = data.reduce((s,c) => s+(c.concluidos||0), 0);
+    const media = data.length ? (totalClientes/data.length).toFixed(1) : 0;
     const top = data[0];
     if (kpiBar) {
       kpiBar.innerHTML = `
         <div class="corretor-kpi-box"><div class="ck-val">${data.length}</div><div class="ck-lbl">Corretores ativos</div></div>
         <div class="corretor-kpi-box"><div class="ck-val">${totalClientes}</div><div class="ck-lbl">Clientes no total</div></div>
+        <div class="corretor-kpi-box"><div class="ck-val" style="color:#10b981">${totalConcluidos}</div><div class="ck-lbl">Processos concluídos</div></div>
         <div class="corretor-kpi-box"><div class="ck-val">${media}</div><div class="ck-lbl">Média por corretor</div></div>
-        ${top ? `<div class="corretor-kpi-box"><div class="ck-val" style="font-size:15px;padding-top:2px">${top.nome.split(" ")[0]}</div><div class="ck-lbl">Lider — ${top.total_vendas} clientes</div></div>` : ""}
+        ${top ? `<div class="corretor-kpi-box"><div class="ck-val" style="font-size:14px">${top.nome.split(" ")[0]}</div><div class="ck-lbl">Líder — ${top.total_vendas} clientes</div></div>` : ""}
       `;
     }
 
-    if (!data.length) {
-      grid.innerHTML = `<div style="padding:24px;color:var(--text-muted)">Nenhum corretor cadastrado.</div>`;
-      return;
-    }
-
-    const cls = ["gold","silver","bronze","other","other","other","other","other"];
-    const max = data[0]?.total_vendas || 1;
-
-    grid.innerHTML = data.map((c, i) => {
-      const initials = c.nome.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
-      const pct = max > 0 ? Math.round((c.total_vendas || 0) / max * 100) : 0;
-      const avatarBg = i===0 ? 'var(--warning)' : i===1 ? '#94a3b8' : i===2 ? '#cd7f32' : 'var(--primary-light)';
-      const nomeEsc = c.nome.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-      return `
-        <div class="cor-card">
-          <div class="cor-card-top">
-            <div class="cor-avatar" style="background:${avatarBg}">${initials}</div>
-            <div style="flex:1;min-width:0">
-              <div class="cor-nome">${c.nome}</div>
-              <div class="cor-creci">CRECI: ${c.creci || "—"}</div>
-              ${c.telefone ? `<div style="font-size:11px;color:var(--text-muted);margin-top:1px">📱 ${c.telefone}</div>` : ""}
-            </div>
-            <div class="rank-pos ${cls[i]||'other'}" style="width:28px;height:28px;font-size:12px">${i+1}</div>
-          </div>
-
-          <div class="cor-info">
-            <div><strong>${c.total_vendas || 0}</strong> clientes</div>
-          </div>
-
-          <!-- barra de ranking -->
-          <div style="height:5px;background:var(--bg);border-radius:99px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:${avatarBg};border-radius:99px;transition:width 0.6s"></div>
-          </div>
-
-          <div class="cor-actions">
-            <button class="btn btn-outline btn-sm" style="flex:1" onclick="verKpiCorretor(${c.id})">📊 Ver Clientes</button>
-            <button class="btn btn-outline btn-sm" onclick="abrirModalCorretor(${c.id},'${nomeEsc}','${c.creci||""}','${c.telefone||""}')">✏️</button>
-            <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="desativarCorretor(${c.id},'${nomeEsc}')">🗑️</button>
-          </div>
-        </div>`;
-    }).join("");
+    renderCorretores(data);
   } catch(e) {
     console.error("Erro ao carregar corretores:", e.message);
   }
@@ -3730,12 +3878,12 @@ async function verKpiCorretor(id) {
           </div>`).join("")
       : `<div style="font-size:12px;color:var(--text-muted)">Nenhum cliente vinculado.</div>`;
 
-    // Tabela de clientes
+    // Tabela de clientes (clicável → abre processo)
     const wfColors = { engenharia:"#6366f1", aprovacao:"#3b82f6", documentacao:"#f59e0b",
       siktd:"#8b5cf6", cartorio:"#ef4444", entrega_chave:"#f97316", concluido:"#10b981" };
     document.getElementById("kpi-cor-clientes").innerHTML = d.clientes.length
       ? d.clientes.map(c => `
-          <tr>
+          <tr class="clickable-row" title="Abrir processo de ${c.nome}" onclick="closeModal('modal-corretor-kpi');abrirModalCliente(${c.id})">
             <td style="font-family:monospace;color:var(--text-muted)">${c.num_ordem}</td>
             <td style="font-weight:600">${c.nome}</td>
             <td style="color:var(--text-muted)">${c.empreendimento}</td>

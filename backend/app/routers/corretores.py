@@ -12,21 +12,56 @@ router = APIRouter(prefix="/api/corretores", tags=["Corretores"])
 router.dependencies.append(Depends(get_current_user))
 
 
-@router.get("", response_model=list[CorretorOut])
-def listar_corretores(db: Session = Depends(get_db)):
-    rows = (
-        db.query(Corretor, func.count(Cliente.id).label("cnt"))
-        .outerjoin(Cliente, Cliente.corretor_id == Corretor.id)
+@router.get("")
+def listar_corretores(db: Session = Depends(get_db)) -> Any:
+    corretores = (
+        db.query(Corretor)
         .filter(Corretor.ativo == True)
-        .group_by(Corretor.id)
-        .order_by(func.count(Cliente.id).desc())
+        .order_by(Corretor.nome)
         .all()
     )
+
+    # Uma query só: todos os clientes ativos com corretor, empreendimento e workflow
+    from sqlalchemy.orm import joinedload
+    clientes_all = (
+        db.query(Cliente)
+        .options(joinedload(Cliente.empreendimento))
+        .filter(Cliente.ativo == True, Cliente.deleted_at == None, Cliente.corretor_id != None)
+        .all()
+    )
+
+    # Agrupa por corretor_id em Python (evita N+1)
+    from collections import defaultdict
+    por_cor: dict[int, list] = defaultdict(list)
+    for c in clientes_all:
+        por_cor[c.corretor_id].append(c)
+
     result = []
-    for corretor, cnt in rows:
-        out = CorretorOut.model_validate(corretor)
-        out.total_vendas = cnt
-        result.append(out)
+    for cor in corretores:
+        clientes = por_cor.get(cor.id, [])
+        total = len(clientes)
+        concluidos = sum(1 for c in clientes if c.workflow_step and c.workflow_step.value == "concluido")
+        # top 3 empreendimentos por quantidade
+        emp_cnt: dict[str, int] = {}
+        for c in clientes:
+            n = c.empreendimento.nome if c.empreendimento else "—"
+            emp_cnt[n] = emp_cnt.get(n, 0) + 1
+        top_emps = sorted(emp_cnt.items(), key=lambda x: -x[1])[:3]
+
+        result.append({
+            "id": cor.id,
+            "nome": cor.nome,
+            "creci": cor.creci,
+            "telefone": cor.telefone,
+            "ativo": cor.ativo,
+            "total_vendas": total,
+            "concluidos": concluidos,
+            "em_andamento": total - concluidos,
+            "empreendimentos": [{"nome": k, "total": v} for k, v in top_emps],
+        })
+
+    # ordena por total desc
+    result.sort(key=lambda x: -x["total_vendas"])
     return result
 
 
