@@ -16,6 +16,18 @@ jobs:
       - name: Instalar rclone
         run: curl https://rclone.org/install.sh | sudo bash
 
+      - name: Configurar rclone
+        env:
+          RCLONE_TOKEN: ${{ secrets.RCLONE_TOKEN }}
+        run: |
+          mkdir -p ~/.config/rclone
+          cat > ~/.config/rclone/rclone.conf << EOF
+          [IMVERP-BANCO]
+          type = drive
+          scope = drive
+          token = ${RCLONE_TOKEN}
+          EOF
+
       - name: Fazer pg_dump do Railway
         env:
           DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_PUBLIC_URL }}
@@ -25,18 +37,10 @@ jobs:
           echo "FILENAME=$FILENAME" >> $GITHUB_ENV
 
       - name: Enviar para Google Drive
-        env:
-          RCLONE_CONFIG_IMVERP_BANCO_TYPE: drive
-          RCLONE_CONFIG_IMVERP_BANCO_SCOPE: drive
-          RCLONE_CONFIG_IMVERP_BANCO_TOKEN: ${{ secrets.RCLONE_TOKEN }}
         run: |
           rclone copy "${{ env.FILENAME }}" "IMVERP-BANCO:Backups/IMVERP/" --progress
 
       - name: Limpar backups com mais de 30 dias
-        env:
-          RCLONE_CONFIG_IMVERP_BANCO_TYPE: drive
-          RCLONE_CONFIG_IMVERP_BANCO_SCOPE: drive
-          RCLONE_CONFIG_IMVERP_BANCO_TOKEN: ${{ secrets.RCLONE_TOKEN }}
         run: |
           rclone delete "IMVERP-BANCO:Backups/IMVERP/" \
             --min-age 30d \
