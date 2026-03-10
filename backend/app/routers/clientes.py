@@ -284,7 +284,7 @@ def deletar_cliente(
 
 
 # ── Upload PDF ────────────────────────────────────────────────────
-MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_PDF_SIZE = 5 * 1024 * 1024   # 5 MB por arquivo
 
 @router.post("/{cliente_id}/upload", response_model=ClientePdfOut)
 async def upload_pdf(

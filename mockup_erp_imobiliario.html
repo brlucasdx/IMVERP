@@ -2059,10 +2059,10 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     <div class="form-group">
       <label class="form-label">📎 Contratos / Documentos (PDF)</label>
       <div class="upload-area" id="upload-area" onclick="document.getElementById('pdf-input').click()">
-        <input type="file" id="pdf-input" accept=".pdf" onchange="onFileSelect(this)">
+        <input type="file" id="pdf-input" accept=".pdf" multiple onchange="onFileSelect(this)">
         <div class="upload-icon">📄</div>
-        <div class="upload-text">Clique para adicionar PDF</div>
-        <div class="upload-sub">PDF · Máx. 10 MB · múltiplos permitidos</div>
+        <div class="upload-text">Clique para adicionar PDFs</div>
+        <div class="upload-sub">Até 5 arquivos · 5 MB cada · somente PDF</div>
       </div>
       <div id="edit-pdfs-lista" style="margin-top:8px"></div>
     </div>
@@ -2682,20 +2682,29 @@ function onChegadaChange() {
 }
 
 // ── FILE UPLOAD ───────────────────────────────────────────────────
-let _pendingPdfFile = null; // arquivo selecionado aguardando upload ao salvar
+let _pendingPdfFiles = []; // arquivos selecionados aguardando upload ao salvar
 
 function onFileSelect(input) {
   const area = document.getElementById('upload-area');
-  if (input.files && input.files[0]) {
-    const f = input.files[0];
-    _pendingPdfFile = f; // guarda referência antes de substituir o DOM
-    area.classList.add('upload-done');
-    area.innerHTML = `
-      <div class="upload-icon">✅</div>
-      <div class="upload-text">${f.name}</div>
-      <div class="upload-sub">${(f.size/1024).toFixed(1)} KB · PDF pronto para envio</div>`;
-    showToast('PDF selecionado — clique em Salvar para enviar!','ok');
-  }
+  if (!input.files || !input.files.length) return;
+
+  const MAX_FILES = 5, MAX_SIZE = 5 * 1024 * 1024;
+  const files = Array.from(input.files);
+  const invalidos = files.filter(f => !f.name.toLowerCase().endsWith('.pdf'));
+  const grandes  = files.filter(f => f.size > MAX_SIZE);
+
+  if (invalidos.length) { showToast('Somente arquivos PDF são aceitos!', ''); return; }
+  if (grandes.length)   { showToast(`Arquivo(s) acima de 5 MB: ${grandes.map(f=>f.name).join(', ')}`, ''); return; }
+  if (files.length > MAX_FILES) { showToast(`Máximo ${MAX_FILES} arquivos por vez!`, ''); return; }
+
+  _pendingPdfFiles = files;
+  area.className = 'upload-area upload-done';
+  area.innerHTML = `
+    <input type="file" id="pdf-input" accept=".pdf" multiple onchange="onFileSelect(this)" style="display:none">
+    <div class="upload-icon">✅</div>
+    <div class="upload-text">${files.length} arquivo${files.length > 1 ? 's' : ''} selecionado${files.length > 1 ? 's' : ''}</div>
+    <div class="upload-sub">${files.map(f => f.name).join(' · ')}</div>`;
+  showToast(`${files.length} PDF${files.length > 1 ? 's' : ''} selecionado${files.length > 1 ? 's' : ''} — clique em Salvar para enviar!`, 'ok');
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────
@@ -3853,7 +3862,7 @@ let _editId = null; // null = novo registro, number = editando
 
 function _resetModal() {
   _editId = null;
-  _pendingPdfFile = null;
+  _pendingPdfFiles = [];
   document.querySelector("#modal-new h3").textContent = "Novo Registro";
   document.querySelector("#modal-new .btn-primary").textContent = "Salvar Registro";
   ["f-num-ordem","f-nome","f-cpf","f-telefone","f-casa","f-quadra","f-lote",
@@ -4197,11 +4206,11 @@ saveRecord = async function() {
       const novo = await apiFetch("/clientes", { method: "POST", body: JSON.stringify(payload) });
       clienteId = novo.id;
     }
-    // upload de PDF se houver arquivo selecionado
-    if (_pendingPdfFile && clienteId) {
-      showToast("Enviando PDF...", "");
-      await uploadPdfApi(clienteId, _pendingPdfFile);
-      _pendingPdfFile = null;
+    // upload de PDFs se houver arquivos selecionados
+    if (_pendingPdfFiles.length && clienteId) {
+      showToast(`Enviando ${_pendingPdfFiles.length} PDF(s)...`, "");
+      await Promise.all(_pendingPdfFiles.map(f => uploadPdfApi(clienteId, f)));
+      _pendingPdfFiles = [];
     }
     showToast(_editId ? "Registro atualizado com sucesso!" : "Registro salvo com sucesso!", "ok");
     closeModal("modal-new");
