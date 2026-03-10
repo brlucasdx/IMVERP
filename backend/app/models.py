@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import (
     Boolean, Column, Date, DateTime, Enum, ForeignKey,
-    Integer, Numeric, String, Text,
+    Integer, LargeBinary, Numeric, String, Text,
 )
 from sqlalchemy.orm import relationship
 import enum
@@ -135,7 +135,8 @@ class Cliente(Base):
     valor_venda          = Column(Numeric(12, 2))  # valor real da venda
 
     # Arquivo
-    pdf_path = Column(String(300))
+    pdf_path = Column(String(300))   # nome original do arquivo (indicador de presença)
+    pdf_data = Column(LargeBinary)   # bytes do PDF (armazenado no PostgreSQL)
 
     # Workflow e status
     workflow_step = Column(

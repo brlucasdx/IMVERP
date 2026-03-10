@@ -1,10 +1,10 @@
 import os
-import shutil
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
@@ -284,6 +284,8 @@ def deletar_cliente(
 
 
 # ── Upload PDF ────────────────────────────────────────────────────
+MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
+
 @router.post("/{cliente_id}/upload", response_model=ClienteOut)
 async def upload_pdf(
     cliente_id: int,
@@ -299,20 +301,36 @@ async def upload_pdf(
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(400, "Somente arquivos PDF são aceitos")
 
-    upload_dir = Path(settings.UPLOAD_DIR) / str(cliente_id)
-    upload_dir.mkdir(parents=True, exist_ok=True)
+    data = await arquivo.read()
+    if len(data) > MAX_PDF_SIZE:
+        raise HTTPException(400, "Arquivo muito grande — máximo 10 MB")
 
-    destino = upload_dir / f"contrato{ext}"
-    with destino.open("wb") as f:
-        shutil.copyfileobj(arquivo.file, f)
-
-    cliente.pdf_path = str(destino)
+    cliente.pdf_data = data
+    cliente.pdf_path = arquivo.filename  # mantém nome original como indicador de presença
     _log(db, cliente_id, "pdf_enviado",
          f"Contrato PDF enviado por {current_user.nome}",
          current_user.id)
     db.commit()
     db.refresh(cliente)
     return cliente
+
+
+# ── Download PDF ───────────────────────────────────────────────────
+@router.get("/{cliente_id}/pdf")
+def download_pdf(
+    cliente_id: int,
+    db: Session = Depends(get_db),
+    _: Usuario = Depends(get_current_user),
+):
+    cliente = db.get(Cliente, cliente_id)
+    if not cliente or not cliente.pdf_data:
+        raise HTTPException(404, "PDF não encontrado")
+    filename = cliente.pdf_path or "contrato.pdf"
+    return Response(
+        content=cliente.pdf_data,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
 
 
 # ── Logs do cliente ───────────────────────────────────────────────
