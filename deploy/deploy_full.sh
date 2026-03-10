@@ -118,6 +118,32 @@ ALTER TABLE clientes ADD COLUMN IF NOT EXISTS data_chave_liberada DATE;
 -- Soft-delete
 ALTER TABLE clientes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
 
+-- Construtoras (entidade própria)
+CREATE TABLE IF NOT EXISTS construtoras (
+  id          SERIAL PRIMARY KEY,
+  nome        VARCHAR(120) NOT NULL UNIQUE,
+  cnpj        VARCHAR(18),
+  telefone    VARCHAR(20),
+  email       VARCHAR(150),
+  responsavel VARCHAR(120),
+  ativo       BOOLEAN DEFAULT TRUE
+);
+-- Garante NOT NULL e DEFAULT (caso tabela já existisse sem eles via create_all)
+UPDATE construtoras SET ativo = TRUE WHERE ativo IS NULL;
+ALTER TABLE construtoras ALTER COLUMN ativo SET DEFAULT TRUE;
+DO $$ BEGIN ALTER TABLE construtoras ALTER COLUMN ativo SET NOT NULL; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+-- Vincula empreendimentos existentes via nome da construtora
+ALTER TABLE empreendimentos ADD COLUMN IF NOT EXISTS construtora_id INTEGER REFERENCES construtoras(id);
+INSERT INTO construtoras (nome, ativo)
+  SELECT DISTINCT construtora, TRUE
+  FROM empreendimentos
+  WHERE construtora IS NOT NULL AND construtora <> ''
+  ON CONFLICT (nome) DO NOTHING;
+UPDATE empreendimentos e
+  SET construtora_id = c.id
+  FROM construtoras c
+  WHERE e.construtora = c.nome AND e.construtora_id IS NULL;
+
 -- Tabela de notas (criada pelo create_all; garante existência)
 CREATE TABLE IF NOT EXISTS notas_clientes (
   id         SERIAL PRIMARY KEY,

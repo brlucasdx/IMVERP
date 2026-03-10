@@ -104,7 +104,7 @@ _WF_LABELS = {
     "engenharia":    "Engenharia",
     "aprovacao":     "Aprovação",
     "documentacao":  "Documentação",
-    "siktd":         "SIKTD",
+    "siktd":         "SICTD",
     "cartorio":      "Cartório",
     "entrega_chave": "Entrega Chave",
     "concluido":     "Concluído",

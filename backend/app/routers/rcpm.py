@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import Optional
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import APIRouter, Depends, Query
 
 from app.auth import get_current_user
@@ -75,6 +75,56 @@ def conciliacao(db: Session = Depends(get_db)):
         "total_geral_rcpm": float(total_geral),
         "total_apolices": sum(r["total_apolices"] for r in result),
         "por_empreendimento": result,
+    }
+
+
+@router.get("/em-cartorio")
+def em_cartorio(db: Session = Depends(get_db)):
+    """
+    Lista todos os clientes atualmente na etapa de cartório,
+    ordenados pelo tempo em cartório (mais antigos primeiro).
+    """
+    hoje = date.today()
+    clientes = (
+        db.query(Cliente)
+        .options(joinedload(Cliente.empreendimento))
+        .filter(
+            Cliente.ativo == True,
+            Cliente.deleted_at == None,
+            Cliente.workflow_step == WorkflowStep.cartorio,
+        )
+        .order_by(Cliente.chegada_cartorio.asc().nullslast())
+        .all()
+    )
+
+    result = []
+    for c in clientes:
+        if c.chegada_cartorio:
+            dias = (hoje - c.chegada_cartorio).days
+            urgencia = "critico" if dias > 30 else "alerta" if dias > 15 else "normal"
+        else:
+            dias = None
+            urgencia = "sem-data"
+
+        result.append({
+            "id": c.id,
+            "num_ordem": c.num_ordem,
+            "nome": c.nome,
+            "empreendimento": c.empreendimento.nome if c.empreendimento else "—",
+            "empreendimento_id": c.empreendimento_id,
+            "construtora": c.empreendimento.construtora if c.empreendimento else "—",
+            "casa": c.casa_num,
+            "chegada_cartorio": str(c.chegada_cartorio) if c.chegada_cartorio else None,
+            "dias_em_cartorio": dias,
+            "urgencia": urgencia,
+            "valor_rcpm": float(c.valor_rcpm) if c.valor_rcpm else None,
+            "doc_recebido": c.doc_recebido,
+        })
+
+    return {
+        "total": len(result),
+        "criticos": sum(1 for r in result if r["urgencia"] == "critico"),
+        "clientes": result,
     }
 
 

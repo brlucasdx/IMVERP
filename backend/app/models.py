@@ -38,20 +38,37 @@ class Unidade(Base):
     empreendimentos = relationship("Empreendimento", back_populates="unidade")
 
 
+class Construtora(Base):
+    """Empresa construtora/incorporadora parceira."""
+    __tablename__ = "construtoras"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    nome        = Column(String(120), nullable=False, unique=True)
+    cnpj        = Column(String(18))          # "00.000.000/0000-00"
+    telefone    = Column(String(20))
+    email       = Column(String(150))
+    responsavel = Column(String(120))         # nome do contato principal
+    ativo       = Column(Boolean, default=True)
+
+    empreendimentos = relationship("Empreendimento", back_populates="construtora_rel")
+
+
 class Empreendimento(Base):
     __tablename__ = "empreendimentos"
 
     id              = Column(Integer, primary_key=True, index=True)
     nome            = Column(String(120), nullable=False, unique=True)
-    construtora     = Column(String(120))
+    construtora     = Column(String(120))    # display name (legacy / fallback)
+    construtora_id  = Column(Integer, ForeignKey("construtoras.id"), nullable=True)
     total_unidades  = Column(Integer, default=0)
     # Jardim das Flores: chave liberada só com assinatura (sem esperar cartório)
     chave_rapida    = Column(Boolean, default=False)
     ativo           = Column(Boolean, default=True)
     unidade_id      = Column(Integer, ForeignKey("unidades.id"), nullable=True)
 
-    clientes = relationship("Cliente", back_populates="empreendimento")
-    unidade  = relationship("Unidade", back_populates="empreendimentos")
+    clientes        = relationship("Cliente", back_populates="empreendimento")
+    unidade         = relationship("Unidade", back_populates="empreendimentos")
+    construtora_rel = relationship("Construtora", back_populates="empreendimentos")
 
 
 class Corretor(Base):

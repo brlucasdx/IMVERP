@@ -495,12 +495,65 @@ tbody tr.row-concluido:hover { background: #ecfdf5; }
 .tab-btn:hover  { color: var(--primary); }
 
 /* ---- RCPM ---- */
-.rcpm-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 18px; }
-.rcpm-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
-.rcpm-card .label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-.rcpm-card .value { font-size: 20px; font-weight: 800; color: var(--primary); }
-.rcpm-card .value.danger  { color: var(--danger); }
-.rcpm-card .value.success { color: var(--success); }
+.rcpm-kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 22px; }
+@media(max-width:900px){ .rcpm-kpi-row { grid-template-columns: repeat(2,1fr); } }
+.rcpm-kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; }
+.rcpm-kpi-card.accent-amber { border-left: 4px solid #f59e0b; }
+.rcpm-kpi-card.accent-danger { border-left: 4px solid var(--danger); }
+.rcpm-kpi-icon { font-size: 28px; line-height: 1; }
+.rcpm-kpi-val { font-size: 22px; font-weight: 800; color: var(--text); }
+.rcpm-kpi-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+/* Em Cartório cards */
+.rcpm-cart-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap: 14px; }
+.rcpm-cart-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: box-shadow .15s; position: relative; overflow: hidden; }
+.rcpm-cart-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.13); transform: translateY(-1px); }
+.rcpm-cart-card.critico { border-top: 4px solid var(--danger); }
+.rcpm-cart-card.alerta  { border-top: 4px solid #f59e0b; }
+.rcpm-cart-card.normal  { border-top: 4px solid var(--success); }
+.rcpm-cart-card.sem-data{ border-top: 4px solid var(--border); }
+.rcpm-cart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.rcpm-cart-ord { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: .5px; text-transform: uppercase; }
+.rcpm-cart-badge { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+.rcpm-cart-badge.critico { background: rgba(239,68,68,.14); color: var(--danger); }
+.rcpm-cart-badge.alerta  { background: rgba(245,158,11,.14); color: #b45309; }
+.rcpm-cart-badge.normal  { background: rgba(34,197,94,.14); color: #166534; }
+.rcpm-cart-badge.sem-data{ background: var(--bg); color: var(--text-muted); }
+.rcpm-cart-nome { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rcpm-cart-meta { font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+.rcpm-cart-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 10px; margin-top: 2px; }
+.rcpm-cart-dt { font-size: 11px; color: var(--text-muted); }
+.rcpm-cart-rcpm { font-size: 13px; font-weight: 700; color: var(--primary); }
+.rcpm-cart-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.rcpm-legend { display: flex; gap: 12px; align-items: center; font-size: 12px; color: var(--text-muted); }
+.rcpm-leg-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 3px; vertical-align: middle; }
+.rcpm-leg-dot.critico { background: var(--danger); }
+.rcpm-leg-dot.alerta  { background: #f59e0b; }
+.rcpm-leg-dot.normal  { background: var(--success); }
+/* Legacy – mantém compatibilidade */
+.rcpm-summary { display: none; }
+.rcpm-card    { display: none; }
+
+/* ---- Construtoras ---- */
+.const-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(310px,1fr)); gap: 16px; }
+.const-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; transition: box-shadow .15s; }
+.const-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.12); }
+.const-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: linear-gradient(90deg,#1a3a5c,#f5c518); }
+.const-nome { font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 3px; }
+.const-cnpj { font-size: 11px; color: var(--text-muted); font-family: monospace; letter-spacing: .5px; margin-bottom: 12px; }
+.const-info-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.const-info-item { font-size: 12px; color: var(--text); display: flex; gap: 8px; align-items: center; }
+.const-info-item .ci-icon { width: 16px; text-align: center; flex-shrink: 0; }
+.const-info-item .ci-val { color: var(--text-muted); }
+.const-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
+.const-emp-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 99px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: var(--text-muted); }
+.const-emp-badge span { color: var(--primary); }
+.const-emp-list { margin: 10px 0 2px; display: flex; flex-direction: column; gap: 4px; }
+.const-emp-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text); padding: 5px 9px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
+.const-emp-item .ci-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+/* RCPM table grouping */
+.rcpm-group-header { background: var(--bg); }
+.rcpm-group-header td { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--text-muted); padding: 6px 12px !important; border-bottom: 1px solid var(--border); }
+.rcpm-subtotal td { font-size: 12px; font-weight: 700; background: rgba(37,99,168,.05); border-top: 1px solid var(--border); }
 
 /* ---- MODAL ---- */
 .modal-overlay {
@@ -1059,6 +1112,7 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     <li><a onclick="nav('base')"><span class="icon">🏆</span> Base</a></li>
     <li><a onclick="nav('chaves')"><span class="icon">🔑</span> Liberar Chaves</a></li>
     <li><a onclick="nav('empreendimentos')"><span class="icon">🏘️</span> Empreendimentos</a></li>
+    <li data-role="admin"><a onclick="nav('construtoras')"><span class="icon">🏗️</span> Construtoras</a></li>
     <li><a onclick="nav('corretores')"><span class="icon">👤</span> Corretores</a></li>
     <li data-role="admin"><a onclick="nav('unidades')"><span class="icon">🏙️</span> Unidades / Cidades</a></li>
   </ul>
@@ -1378,6 +1432,19 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     </div>
 
     <!-- =====================================================
+         CONSTRUTORAS
+    ====================================================== -->
+    <div class="page" id="page-construtoras">
+      <div class="page-header">
+        <div><h2>🏗️ Construtoras</h2><p>Construtoras e incorporadoras parceiras</p></div>
+        <button class="btn btn-primary" onclick="abrirModalConstrutora()">+ Nova Construtora</button>
+      </div>
+      <div class="const-grid" id="const-grid">
+        <div style="padding:24px;color:var(--text-muted)">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- =====================================================
          CORRETORES
     ====================================================== -->
     <div class="page" id="page-corretores">
@@ -1417,27 +1484,45 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     ====================================================== -->
     <div class="page" id="page-rcpm">
       <div class="page-header">
-        <div><h2>Relatórios para Construtores</h2><p>Conciliação RCPM e controle de garantias</p></div>
-        <button class="btn-export-construtora" onclick="openModal('modal-export')">
-          📄 Gerar Extrato Construtora
+        <div><h2>🛡️ Relatórios para Construtores</h2><p>RCPM, cartório e controle de garantias</p></div>
+        <button class="btn btn-outline" onclick="openModal('modal-export')" style="display:flex;align-items:center;gap:6px;padding:8px 16px;font-size:13px">
+          📄 Gerar Extrato
         </button>
       </div>
-      <div class="tabs">
-        <button class="tab-btn active" onclick="tab(this,'t-conciliacao')">Conciliação por Construtora</button>
-        <button class="tab-btn" onclick="tab(this,'t-cartorio')">Chegadas de Cartório</button>
+
+      <!-- KPI Bar -->
+      <div class="rcpm-kpi-row">
+        <div class="rcpm-kpi-card">
+          <div class="rcpm-kpi-icon">📋</div>
+          <div><div class="rcpm-kpi-val" id="rcpm-kpi-apolices">—</div><div class="rcpm-kpi-lbl">Total Apólices</div></div>
+        </div>
+        <div class="rcpm-kpi-card">
+          <div class="rcpm-kpi-icon">💰</div>
+          <div><div class="rcpm-kpi-val" id="rcpm-kpi-total">—</div><div class="rcpm-kpi-lbl">RCPM Acumulado</div></div>
+        </div>
+        <div class="rcpm-kpi-card accent-amber">
+          <div class="rcpm-kpi-icon">🏠</div>
+          <div><div class="rcpm-kpi-val" id="rcpm-kpi-cartorio">—</div><div class="rcpm-kpi-lbl">Em Cartório Agora</div></div>
+        </div>
+        <div class="rcpm-kpi-card accent-danger">
+          <div class="rcpm-kpi-icon">⚠️</div>
+          <div><div class="rcpm-kpi-val" id="rcpm-kpi-atrasados">—</div><div class="rcpm-kpi-lbl">Docs Atrasados</div></div>
+        </div>
       </div>
 
+      <div class="tabs">
+        <button class="tab-btn active" onclick="tab(this,'t-conciliacao')">📊 Visão Geral</button>
+        <button class="tab-btn" onclick="tab(this,'t-em-cartorio');loadEmCartorio()">🏠 Em Cartório Agora</button>
+        <button class="tab-btn" onclick="tab(this,'t-vencimentos')">📋 Vencimentos RCPM</button>
+      </div>
+
+      <!-- Tab 1: Visão Geral -->
       <div id="t-conciliacao">
-        <div class="rcpm-summary" id="rcpm-summary-cards">
-          <div class="rcpm-card"><div class="label">Total Apólices</div><div class="value" id="rcpm-kpi-apolices">—</div></div>
-          <div class="rcpm-card"><div class="label">Total RCPM Acumulado</div><div class="value" id="rcpm-kpi-total">—</div></div>
-          <div class="rcpm-card"><div class="label">Empreendimentos</div><div class="value" id="rcpm-kpi-emps">—</div></div>
-        </div>
         <div class="section-card">
-          <div class="section-header"><h3>Detalhamento por Empreendimento</h3></div>
+          <div class="section-header"><h3>Detalhamento por Construtora / Empreendimento</h3></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Construtora</th><th>Empreendimento</th><th>Apólices</th><th>Valor RCPM Total</th><th>Em Cartório</th><th>Atrasados</th></tr></thead>
+              <thead><tr><th>Construtora</th><th>Empreendimento</th><th style="text-align:center">Apólices</th><th style="text-align:right">Valor RCPM</th><th style="text-align:center">Em Cartório</th><th style="text-align:center">Atrasados</th></tr></thead>
               <tbody id="rcpm-conc-tbody">
                 <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Carregando...</td></tr>
               </tbody>
@@ -1446,10 +1531,31 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
         </div>
       </div>
 
-      <div id="t-cartorio" style="display:none">
+      <!-- Tab 2: Em Cartório Agora -->
+      <div id="t-em-cartorio" style="display:none">
+        <div class="rcpm-cart-header-row">
+          <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+            <span style="font-size:14px;color:var(--text-muted)">Total em cartório: <strong id="rcpm-cart-count" style="color:var(--text)">—</strong></span>
+            <span class="rcpm-legend">
+              <span><span class="rcpm-leg-dot critico"></span>Crítico (&gt;30 dias)</span>
+              <span><span class="rcpm-leg-dot alerta"></span>Alerta (&gt;15 dias)</span>
+              <span><span class="rcpm-leg-dot normal"></span>Normal</span>
+            </span>
+          </div>
+          <select class="form-select" id="rcpm-cart-fil-emp" onchange="filtrarEmCartorio()" style="width:220px;font-size:13px">
+            <option value="">Todos os empreendimentos</option>
+          </select>
+        </div>
+        <div id="rcpm-cart-grid" class="rcpm-cart-grid">
+          <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted)">⏳ Carregando...</div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Vencimentos RCPM -->
+      <div id="t-vencimentos" style="display:none">
         <div class="section-card">
           <div class="section-header">
-            <h3>📂 Chegadas de Garantia do Cartório</h3>
+            <h3>📋 Chegadas de Garantia do Cartório</h3>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <select class="form-select" id="rcpm-fil-status" onchange="loadVencimentos()" style="font-size:12px;padding:5px 10px;height:32px">
                 <option value="">Todos os status</option>
@@ -1893,7 +1999,7 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
       <div class="form-group"><label class="form-label">Valor de Venda (R$)</label><input class="form-input" type="number" step="0.01" id="f-venda" placeholder="0.00"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">SIKTD OK (Data)</label><input class="form-input" type="date" id="f-siktd-ok"></div>
+      <div class="form-group"><label class="form-label">SICTD OK (Data)</label><input class="form-input" type="date" id="f-siktd-ok"></div>
       <div class="form-group"><label class="form-label">Envio ao Cartório</label><input class="form-input" type="date" id="f-cartorio-envio"></div>
     </div>
     <div class="form-group">
@@ -1951,10 +2057,16 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
       <button class="modal-close" onclick="closeModal('modal-emp')">✕</button>
     </div>
     <div class="form-group"><label class="form-label required">Nome do Empreendimento / Bairro</label><input class="form-input" id="emp-nome" placeholder="Ex.: Jardim das Flores"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Construtora</label><input class="form-input" id="emp-const" placeholder="Ex.: Construtora Beta"></div>
-      <div class="form-group"><label class="form-label">Total de Unidades</label><input class="form-input" type="number" id="emp-unidades" placeholder="0" min="0"></div>
+    <div class="form-group">
+      <label class="form-label">Construtora</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select class="form-input" id="emp-const-sel" style="flex:1">
+          <option value="">— Selecione uma construtora —</option>
+        </select>
+        <button type="button" class="btn btn-outline btn-sm" onclick="abrirModalConstrutora(true)" title="Cadastrar nova construtora" style="white-space:nowrap;height:38px;padding:0 12px">+ Nova</button>
+      </div>
     </div>
+    <div class="form-group"><label class="form-label">Total de Unidades</label><input class="form-input" type="number" id="emp-unidades" placeholder="0" min="0"></div>
     <div class="form-group">
       <label class="form-label">Unidade / Cidade</label>
       <select class="form-input" id="sel-emp-unidade">
@@ -1974,6 +2086,44 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-emp')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarEmp()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     MODAL: CONSTRUTORA
+=================================================================== -->
+<div class="modal-overlay" id="modal-construtora">
+  <div class="modal" style="width:500px">
+    <div class="modal-header">
+      <h3 id="modal-const-title">Nova Construtora</h3>
+      <button class="modal-close" onclick="fecharModalConstrutora()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label required">Nome da Construtora</label>
+      <input class="form-input" id="const-nome" placeholder="Ex.: Construtora Alpha Ltda">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">CNPJ</label>
+        <input class="form-input" id="const-cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telefone</label>
+        <input class="form-input" id="const-tel" placeholder="(92) 99999-9999">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-mail</label>
+      <input class="form-input" id="const-email" type="email" placeholder="contato@construtora.com.br">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsável / Contato</label>
+      <input class="form-input" id="const-resp" placeholder="Nome do representante comercial">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="fecharModalConstrutora()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarConstrutora()">Salvar</button>
     </div>
   </div>
 </div>
@@ -2190,6 +2340,7 @@ const PAGE_INFO = {
   clientes:        ["Processos","Fluxo comercial — acompanhamento de todos os processos"],
   base:            ["Base","Processos concluídos e arquivados"],
   empreendimentos: ['Empreendimentos','Cadastro e gestão de loteamentos'],
+  construtoras:    ['Construtoras','Cadastro e gestão de construtoras parceiras'],
   unidades:        ['Unidades & Cidades','Filiais por cidade — filtros e métricas por unidade'],
   corretores:      ['Configuração de Corretores','Ranking e metas'],
   rcpm:            ['Relatórios p/ Construtores','Conciliação RCPM e chegadas de cartório'],
@@ -2418,7 +2569,7 @@ function filterTable() {
 function tab(btn, id) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  ['t-conciliacao','t-cartorio'].forEach(t => {
+  ['t-conciliacao','t-em-cartorio','t-vencimentos'].forEach(t => {
     document.getElementById(t).style.display = t === id ? 'block' : 'none';
   });
 }
@@ -3053,8 +3204,12 @@ async function loadPipelineDuracao() {
 }
 
 // ── RCPM ─────────────────────────────────────────────────────────
+let _rcpmEmCartorioData = [];
+
 async function loadRcpm() {
-  await Promise.all([loadConciliacao(), loadVencimentos()]);
+  await loadConciliacao();
+  // Vencimentos carrega ao selecionar tab; refresca badge em background
+  loadVencimentos();
 }
 
 async function loadConciliacao() {
@@ -3065,13 +3220,28 @@ async function loadConciliacao() {
     const d = await apiFetch("/rcpm/conciliacao");
     document.getElementById("rcpm-kpi-apolices").textContent = d.total_apolices;
     document.getElementById("rcpm-kpi-total").textContent    = fmtR(d.total_geral_rcpm);
-    document.getElementById("rcpm-kpi-emps").textContent     = d.por_empreendimento.length;
 
-    // Populate empreendimento filter in cartório tab
+    const totalCartorio  = d.por_empreendimento.reduce((s,e) => s + e.em_cartorio, 0);
+    const totalAtrasados = d.por_empreendimento.reduce((s,e) => s + e.atrasados, 0);
+    document.getElementById("rcpm-kpi-cartorio").textContent  = totalCartorio;
+    document.getElementById("rcpm-kpi-atrasados").textContent = totalAtrasados;
+
+    // Populate empreendimento filter in vencimentos tab
     const selEmp = document.getElementById("rcpm-fil-emp");
     if (selEmp) {
       const prev = selEmp.value;
       selEmp.innerHTML = `<option value="">Todos os empreendimentos</option>` +
+        d.por_empreendimento.map(e =>
+          `<option value="${e.empreendimento_id}"${e.empreendimento_id == prev ? ' selected':''}>
+            ${e.empreendimento}
+          </option>`
+        ).join("");
+    }
+    // Also populate the em-cartorio tab filter
+    const selCart = document.getElementById("rcpm-cart-fil-emp");
+    if (selCart) {
+      const prev = selCart.value;
+      selCart.innerHTML = `<option value="">Todos os empreendimentos</option>` +
         d.por_empreendimento.map(e =>
           `<option value="${e.empreendimento_id}"${e.empreendimento_id == prev ? ' selected':''}>
             ${e.empreendimento}
@@ -3083,30 +3253,139 @@ async function loadConciliacao() {
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Nenhum empreendimento com RCPM registrado.</td></tr>`;
       return;
     }
-    tbody.innerHTML = d.por_empreendimento.map(e => {
-      const atrCls = e.atrasados > 0 ? "color:var(--danger);font-weight:700" : "color:var(--text-muted)";
-      const cartCls= e.em_cartorio > 0 ? "color:#f59e0b;font-weight:700" : "color:var(--text-muted)";
-      return `<tr>
-        <td><strong>${e.construtora}</strong></td>
-        <td>${e.empreendimento}</td>
-        <td style="text-align:center;font-weight:600">${e.total_apolices}</td>
-        <td style="font-weight:700;color:var(--primary)">${fmtR(e.valor_total_rcpm)}</td>
-        <td style="text-align:center;${cartCls}">${e.em_cartorio}</td>
-        <td style="text-align:center;${atrCls}">${e.atrasados}</td>
-      </tr>`;
-    }).join("");
+
+    // Agrupa por construtora
+    const grupos = {};
+    for (const e of d.por_empreendimento) {
+      const key = e.construtora || "—";
+      if (!grupos[key]) grupos[key] = [];
+      grupos[key].push(e);
+    }
+
+    let rows = "";
+    let totalApolices = 0, totalRcpm = 0, totalCart = 0, totalAtr = 0;
+    for (const [constNome, emps] of Object.entries(grupos)) {
+      const subApolices = emps.reduce((s,e) => s + e.total_apolices, 0);
+      const subRcpm     = emps.reduce((s,e) => s + e.valor_total_rcpm, 0);
+      const subCart     = emps.reduce((s,e) => s + e.em_cartorio, 0);
+      const subAtr      = emps.reduce((s,e) => s + e.atrasados, 0);
+      totalApolices += subApolices; totalRcpm += subRcpm; totalCart += subCart; totalAtr += subAtr;
+
+      rows += `<tr class="rcpm-group-header"><td colspan="6"><span style="font-size:14px">🏗️</span> ${constNome}</td></tr>`;
+      for (const e of emps) {
+        const atrCls  = e.atrasados  > 0 ? "color:var(--danger);font-weight:700" : "color:var(--text-muted)";
+        const cartBtn = e.em_cartorio > 0
+          ? `<button class="btn-link" style="font-weight:700;color:#d97706" onclick="switchToEmCartorio(${e.empreendimento_id})">${e.em_cartorio} →</button>`
+          : `<span style="color:var(--text-muted)">0</span>`;
+        rows += `<tr>
+          <td style="padding-left:24px;color:var(--text-muted);font-size:12px">↳</td>
+          <td style="font-weight:600">${e.empreendimento}</td>
+          <td style="text-align:center">${e.total_apolices}</td>
+          <td style="text-align:right;color:var(--primary);font-weight:700">${fmtR(e.valor_total_rcpm)}</td>
+          <td style="text-align:center">${cartBtn}</td>
+          <td style="text-align:center;${atrCls}">${e.atrasados}</td>
+        </tr>`;
+      }
+      if (emps.length > 1) {
+        rows += `<tr class="rcpm-subtotal">
+          <td colspan="2" style="padding-left:24px;font-size:12px;color:var(--text-muted)">Subtotal ${constNome}</td>
+          <td style="text-align:center">${subApolices}</td>
+          <td style="text-align:right;color:var(--primary)">${fmtR(subRcpm)}</td>
+          <td style="text-align:center;${subCart>0?'color:#d97706':''}">${subCart}</td>
+          <td style="text-align:center;${subAtr>0?'color:var(--danger)':''}">${subAtr}</td>
+        </tr>`;
+      }
+    }
+    // Linha de total geral
+    rows += `<tr style="background:var(--primary);color:#fff;font-weight:700">
+      <td colspan="2" style="padding:10px 12px;border-radius:0">Total Geral</td>
+      <td style="text-align:center;padding:10px">${totalApolices}</td>
+      <td style="text-align:right;padding:10px">${fmtR(totalRcpm)}</td>
+      <td style="text-align:center;padding:10px">${totalCart}</td>
+      <td style="text-align:center;padding:10px">${totalAtr}</td>
+    </tr>`;
+    tbody.innerHTML = rows;
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger)">Erro ao carregar dados.</td></tr>`;
     console.error("RCPM conciliação:", e);
   }
 }
 
+function switchToEmCartorio(empId) {
+  // Muda para aba "Em Cartório Agora" e filtra pelo empreendimento
+  const tabBtn = document.querySelector('.tab-btn:nth-child(2)');
+  if (tabBtn) tab(tabBtn, 't-em-cartorio');
+  const sel = document.getElementById("rcpm-cart-fil-emp");
+  if (sel && empId) { sel.value = empId; }
+  loadEmCartorio();
+}
+
+async function loadEmCartorio() {
+  const grid = document.getElementById("rcpm-cart-grid");
+  if (!grid) return;
+  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted)">⏳ Carregando...</div>`;
+  try {
+    const d = await apiFetch("/rcpm/em-cartorio");
+    _rcpmEmCartorioData = d.clientes || [];
+    document.getElementById("rcpm-cart-count").textContent = d.total;
+    filtrarEmCartorio();
+  } catch(e) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--danger)">Erro ao carregar dados.</div>`;
+    console.error("RCPM em-cartorio:", e);
+  }
+}
+
+function filtrarEmCartorio() {
+  const grid  = document.getElementById("rcpm-cart-grid");
+  if (!grid) return;
+  const empId = document.getElementById("rcpm-cart-fil-emp")?.value || "";
+  const lista = empId
+    ? _rcpmEmCartorioData.filter(c => String(c.empreendimento_id) === String(empId))
+    : _rcpmEmCartorioData;
+
+  if (!lista.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted)">Nenhum processo em cartório${empId ? ' para este empreendimento' : ''}.</div>`;
+    return;
+  }
+
+  grid.innerHTML = lista.map(c => {
+    const urg = c.urgencia || "sem-data";
+    const diasTxt = c.dias_em_cartorio != null
+      ? `${c.dias_em_cartorio} dia${c.dias_em_cartorio !== 1 ? 's' : ''} em cartório`
+      : "Sem data registrada";
+    const urgLabel = {
+      critico:  "🔴 Crítico",
+      alerta:   "🟡 Alerta",
+      normal:   "🟢 Normal",
+      "sem-data": "📅 Sem data",
+    }[urg] || urg;
+    const dtFmt = c.chegada_cartorio ? c.chegada_cartorio.split("-").reverse().join("/") : "—";
+    const rcpmFmt = c.valor_rcpm ? fmtR(c.valor_rcpm) : `<span style="color:var(--text-muted)">Sem RCPM</span>`;
+    const casaTxt = c.casa ? `🏠 ${c.casa}` : "";
+    return `<div class="rcpm-cart-card ${urg}" onclick="verCliente(${c.id})" title="Clique para ver o processo">
+      <div class="rcpm-cart-head">
+        <span class="rcpm-cart-ord">${c.num_ordem || "—"}</span>
+        <span class="rcpm-cart-badge ${urg}">${urgLabel}</span>
+      </div>
+      <div class="rcpm-cart-nome" title="${c.nome}">${c.nome}</div>
+      <div class="rcpm-cart-meta">
+        <span>🏘️ ${c.empreendimento}${casaTxt ? "  " + casaTxt : ""}</span>
+        <span>⏱ ${diasTxt}</span>
+      </div>
+      <div class="rcpm-cart-footer">
+        <span class="rcpm-cart-dt">📅 ${dtFmt}</span>
+        <span class="rcpm-cart-rcpm">${rcpmFmt}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
 async function loadVencimentos() {
   const tbody = document.getElementById("rcpm-cart-tbody");
   if (!tbody) return;
   tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">⏳ Carregando...</td></tr>`;
-  const status   = document.getElementById("rcpm-fil-status")?.value || "";
-  const empId    = document.getElementById("rcpm-fil-emp")?.value    || "";
+  const status = document.getElementById("rcpm-fil-status")?.value || "";
+  const empId  = document.getElementById("rcpm-fil-emp")?.value    || "";
   try {
     const qs = new URLSearchParams();
     if (status) qs.set("status", status);
@@ -3126,7 +3405,7 @@ async function loadVencimentos() {
       return;
     }
     tbody.innerHTML = data.map(c => {
-      const rowCls = c.situacao === "atrasado" ? "row-vencido" : c.situacao === "proximo" ? "row-proximo" : c.situacao === "recebido" ? "row-ok" : "";
+      const rowCls  = c.situacao === "atrasado" ? "row-vencido" : c.situacao === "proximo" ? "row-proximo" : c.situacao === "recebido" ? "row-ok" : "";
       const docHtml = c.doc_recebido
         ? `<span class="doc-recebido">✓ Recebido</span>`
         : c.situacao === "atrasado"
@@ -3134,7 +3413,7 @@ async function loadVencimentos() {
           : `<span class="doc-aguardando">⏳ Aguardando</span>`;
       const rcpmHtml = c.valor_rcpm ? fmtR(c.valor_rcpm) : `<span style="color:var(--text-muted)">—</span>`;
       const pdfHtml  = c.pdf ? `<span class="tag verde">PDF ✓</span>` : `<span class="tag cinza">Sem PDF</span>`;
-      const dtCart = c.chegada_cartorio ? c.chegada_cartorio.split("-").reverse().join("/") : "—";
+      const dtCart   = c.chegada_cartorio ? c.chegada_cartorio.split("-").reverse().join("/") : "—";
       return `<tr class="${rowCls}">
         <td>${c.num_ordem}</td>
         <td><button class="btn-link" onclick="verCliente(${c.id})">${c.nome}</button></td>
@@ -3157,7 +3436,7 @@ const WF_DEFS = [
   {key:"engenharia",    num:1, label:"Engenharia"},
   {key:"aprovacao",     num:2, label:"Aprovação"},
   {key:"documentacao",  num:3, label:"Certidões"},
-  {key:"siktd",         num:4, label:"SIKTD"},
+  {key:"siktd",         num:4, label:"SICTD"},
   {key:"cartorio",      num:5, label:"Cartório"},
   {key:"entrega_chave", num:6, label:"Entrega Chave"},
   {key:"concluido",     num:7, label:"Concluído"},
@@ -3177,7 +3456,7 @@ async function loadClientes(params = {}) {
     const data = await apiFetch(`/clientes${qs ? "?" + qs : ""}`);
 
     const WFSTEPS  = ["engenharia","aprovacao","documentacao","siktd","cartorio","entrega_chave","concluido"];
-    const WFLABELS = ["Eng.","Aprovação","Docs","SIKTD","Cartório","Ent. Chave","Concluído"];
+    const WFLABELS = ["Eng.","Aprovação","Docs","SICTD","Cartório","Ent. Chave","Concluído"];
 
     const tbody = document.getElementById("tbody-clientes");
     if (!tbody) return;
@@ -3449,6 +3728,7 @@ nav = function(page) {
   if (page === "chaves")    loadChaves();
   if (page === "corretores")    loadCorretores();
   if (page === "empreendimentos") { loadFormSelects(); loadEmpreendimentos(); }
+  if (page === "construtoras")   loadConstrutoras();
   if (page === "unidades")        loadUnidades();
   if (page === "lixeira")         loadLixeira();
   if (page === "base")            loadBase();
@@ -3550,19 +3830,147 @@ async function editarCliente(id) {
   }
 }
 
+// ── CONSTRUTORAS ──────────────────────────────────────────────────
+let _editConstId    = null;
+let _fromEmpModal   = false;
+
+async function loadConstrutoras() {
+  const grid = document.getElementById("const-grid");
+  if (!grid) return;
+  grid.innerHTML = `<div style="padding:24px;color:var(--text-muted)">⏳ Carregando...</div>`;
+  try {
+    const data = await apiFetch("/construtoras");
+    if (!data.length) {
+      grid.innerHTML = `<div style="padding:32px;color:var(--text-muted);text-align:center">
+        Nenhuma construtora cadastrada.<br>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="abrirModalConstrutora()">+ Cadastrar primeira construtora</button>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = data.map(c => {
+      const cnpj  = c.cnpj        ? `<div class="const-info-item"><span class="ci-icon">🪪</span><span class="ci-val">${c.cnpj}</span></div>` : "";
+      const tel   = c.telefone    ? `<div class="const-info-item"><span class="ci-icon">📞</span><span class="ci-val">${c.telefone}</span></div>` : "";
+      const email = c.email       ? `<div class="const-info-item"><span class="ci-icon">✉️</span><span class="ci-val">${c.email}</span></div>` : "";
+      const resp  = c.responsavel ? `<div class="const-info-item"><span class="ci-icon">👤</span>${c.responsavel}</div>` : "";
+      const infos = cnpj + tel + email + resp;
+      const nomes = c.empreendimentos_nomes || [];
+      const empListHtml = nomes.length
+        ? `<div class="const-emp-list">${nomes.map(n =>
+            `<div class="const-emp-item"><span class="ci-dot"></span>${n}</div>`
+          ).join("")}</div>`
+        : `<div style="font-size:12px;color:var(--text-muted);margin-top:8px;padding:6px 0">Nenhum empreendimento vinculado</div>`;
+      return `<div class="const-card">
+        <div class="const-nome">${c.nome}</div>
+        ${c.cnpj ? `<div class="const-cnpj">${c.cnpj}</div>` : ''}
+        <div class="const-info-row">${infos || '<span style="font-size:12px;color:var(--text-muted)">Sem informações de contato</span>'}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:8px">🏘️ Empreendimentos</div>
+        ${empListHtml}
+        <div class="const-footer" style="margin-top:12px">
+          <span></span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm" onclick="abrirModalConstrutora(false,${c.id})">✏️ Editar</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deletarConstrutora(${c.id},'${c.nome.replace(/'/g,"\\'")}')">Remover</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+  } catch(e) {
+    grid.innerHTML = `<div style="padding:24px;color:var(--danger)">Erro ao carregar: ${e.message}</div>`;
+  }
+}
+
+function abrirModalConstrutora(fromEmpModal = false, id = null) {
+  _fromEmpModal = fromEmpModal;
+  _editConstId  = id;
+  const c = id ? _constCache.find(x => x.id === id) : null;
+  document.getElementById("modal-const-title").textContent = id ? `Editar — ${c?.nome || "Construtora"}` : "Nova Construtora";
+  document.getElementById("const-nome").value  = c?.nome        || "";
+  document.getElementById("const-cnpj").value  = c?.cnpj        || "";
+  document.getElementById("const-tel").value   = c?.telefone    || "";
+  document.getElementById("const-email").value = c?.email       || "";
+  document.getElementById("const-resp").value  = c?.responsavel || "";
+  document.getElementById("modal-construtora").classList.add("open");
+}
+
+function fecharModalConstrutora() {
+  document.getElementById("modal-construtora").classList.remove("open");
+  if (_fromEmpModal) document.getElementById("modal-emp").classList.add("open");
+  _fromEmpModal = false;
+  _editConstId  = null;
+}
+
+async function salvarConstrutora() {
+  const nome = document.getElementById("const-nome").value.trim();
+  if (!nome) { showToast("Nome da construtora obrigatório!", ""); return; }
+  const payload = {
+    nome,
+    cnpj:        document.getElementById("const-cnpj").value.trim()  || null,
+    telefone:    document.getElementById("const-tel").value.trim()   || null,
+    email:       document.getElementById("const-email").value.trim() || null,
+    responsavel: document.getElementById("const-resp").value.trim()  || null,
+  };
+  try {
+    let saved;
+    if (_editConstId) {
+      saved = await apiFetch(`/construtoras/${_editConstId}`, { method:"PUT", body: JSON.stringify(payload) });
+      showToast("Construtora atualizada!", "ok");
+    } else {
+      saved = await apiFetch("/construtoras", { method:"POST", body: JSON.stringify(payload) });
+      showToast("Construtora cadastrada!", "ok");
+    }
+    // Atualiza cache
+    await loadFormSelects();
+    document.getElementById("modal-construtora").classList.remove("open");
+    if (_fromEmpModal) {
+      // Volta pro modal de empreendimento e seleciona a nova construtora
+      document.getElementById("modal-emp").classList.add("open");
+      const selConst = document.getElementById("emp-const-sel");
+      if (selConst && saved?.id) selConst.value = saved.id;
+    } else {
+      loadConstrutoras();
+    }
+    _fromEmpModal = false;
+    _editConstId  = null;
+  } catch(e) {
+    showToast("Erro: " + e.message, "");
+  }
+}
+
+async function deletarConstrutora(id, nome) {
+  if (!confirm(`Remover "${nome}"?\n\nEla não aparecerá mais nas listas. Os empreendimentos vinculados não serão afetados.`)) return;
+  try {
+    await apiFetch(`/construtoras/${id}`, { method:"DELETE" });
+    showToast(`${nome} removida.`, "ok");
+    loadConstrutoras();
+    loadFormSelects();
+  } catch(e) { showToast("Erro: " + e.message, ""); }
+}
+
 // ── Cache de empreendimentos e unidades (para filtros) ─────────────
 let _empsCache      = [];
 let _unidadesCache  = [];
 
 // ── Carrega selects do formulário via API ─────────────────────────
+let _constCache = [];
+
 async function loadFormSelects() {
   try {
-    const [empreends, corretores, analistas, unidades] = await Promise.all([
+    const [empreends, corretores, analistas, unidades, construtoras_] = await Promise.all([
       apiFetch("/empreendimentos").catch(() => []),
       apiFetch("/corretores").catch(() => []),
       apiFetch("/analistas").catch(() => []),
       apiFetch("/unidades").catch(() => []),
+      apiFetch("/construtoras").catch(() => []),
     ]);
+    _constCache = construtoras_;
+    // Atualiza select de construtoras no modal-emp
+    const selConst = document.getElementById("emp-const-sel");
+    if (selConst) {
+      const cur = selConst.value;
+      selConst.innerHTML = '<option value="">— Selecione uma construtora —</option>' +
+        construtoras_.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+      if (cur) selConst.value = cur;
+    }
     _unidadesCache = unidades;
 
     // Atualiza selects de unidade (modal-emp + filtros)
@@ -3723,12 +4131,11 @@ function toggleChaveRapida() {
   lbl.style.color = _chaveRapidaAtiva ? "var(--info)" : "";
 }
 
-function abrirModalEmp(id, nome, construtora, unidades, chaveRapida, unidadeId) {
+function abrirModalEmp(id, nome, construtora, unidades, chaveRapida, unidadeId, construtora_id) {
   _editEmpId = id || null;
   _chaveRapidaAtiva = chaveRapida || false;
   document.getElementById("modal-emp-title").textContent = id ? `Editar — ${nome}` : "Novo Empreendimento";
   document.getElementById("emp-nome").value     = nome || "";
-  document.getElementById("emp-const").value    = construtora || "";
   document.getElementById("emp-unidades").value = unidades || "";
   if (unidadeId) document.getElementById("sel-emp-unidade").value = unidadeId;
   else if (document.getElementById("sel-emp-unidade")) document.getElementById("sel-emp-unidade").value = "";
@@ -3737,21 +4144,27 @@ function abrirModalEmp(id, nome, construtora, unidades, chaveRapida, unidadeId) 
   btn.className = _chaveRapidaAtiva ? "toggle on" : "toggle";
   lbl.textContent = _chaveRapidaAtiva ? "Chave Rápida — liberada na assinatura" : "Padrão — aguarda retorno do cartório";
   lbl.style.color = _chaveRapidaAtiva ? "var(--info)" : "";
-  // Garante que os selects de unidade estão populados
-  loadFormSelects();
+  // Garante que os selects estão populados, depois define construtora
+  loadFormSelects().then(() => {
+    const selConst = document.getElementById("emp-const-sel");
+    if (selConst) selConst.value = construtora_id || "";
+  });
   document.getElementById("modal-emp").classList.add("open");
 }
 
 async function salvarEmp() {
   const nome = document.getElementById("emp-nome").value.trim();
   if (!nome) { showToast("Nome do empreendimento obrigatório!", ""); return; }
-  const empUniId = parseInt(document.getElementById("sel-emp-unidade")?.value) || null;
+  const empUniId  = parseInt(document.getElementById("sel-emp-unidade")?.value) || null;
+  const selConst  = document.getElementById("emp-const-sel");
+  const constId   = selConst?.value ? parseInt(selConst.value) : null;
+  const constNome = constId ? (selConst.selectedOptions[0]?.text || null) : null;
   const payload = {
     nome,
-    construtora:    document.getElementById("emp-const").value.trim() || null,
     total_unidades: parseInt(document.getElementById("emp-unidades").value) || 0,
     chave_rapida:   _chaveRapidaAtiva,
     unidade_id:     empUniId,
+    ...(constId ? { construtora_id: constId, construtora: constNome } : {}),
   };
   try {
     if (_editEmpId) {
@@ -3804,7 +4217,7 @@ async function loadEmpreendimentos() {
           <div class="emp-card-top">
             <div>
               <div class="emp-nome">${e.nome}</div>
-              <div class="emp-const">${e.construtora || "Construtora não informada"}</div>
+              <div class="emp-const">${e.construtora || (e.construtora_id ? "—" : '<span style="color:var(--danger);font-weight:600">⚠ Vincule uma construtora</span>')}</div>
               ${unidadeTag}
             </div>
             ${isJdF ? '<span class="badge-chave-rapida">🌸 Chave Rápida</span>' : ''}
@@ -3824,7 +4237,7 @@ async function loadEmpreendimentos() {
           </div>
           <div style="display:flex;gap:6px;margin-top:4px">
             <button class="btn btn-outline btn-sm" style="flex:1"
-              onclick="abrirModalEmp(${e.id},'${escapedNome}','${escapedConst}',${e.total_unidades},${e.chave_rapida},${e.unidade_id||'null'})">
+              onclick="abrirModalEmp(${e.id},'${escapedNome}','${escapedConst}',${e.total_unidades},${e.chave_rapida},${e.unidade_id||'null'},${e.construtora_id||'null'})">
               ✏️ Editar
             </button>
             <button class="btn btn-outline btn-sm" style="color:var(--danger)"
@@ -4498,27 +4911,32 @@ async function verCliente(id) {
 
     // ── Workflow premium ──────────────────────────────────────────
     const WFKEYS  = ["engenharia","aprovacao","documentacao","siktd","cartorio","entrega_chave","concluido"];
-    const WFLBLS  = ["Engenharia","Aprovação","Certidões","SIKTD","Cartório","Entrega Chave","Concluído"];
+    const WFLBLS  = ["Engenharia","Aprovação","Certidões","SICTD","Cartório","Entrega Chave","Concluído"];
     const WFICONS = ["🏗️","🏦","📋","💻","🏛️","🔑","🏆"];
     const WFDESC  = [
       "Laudo do engenheiro",
-      "Assinatura na Caixa · " + (c.data_assinatura || "pendente"),
+      "Assinatura na Caixa",
       "Certidões e pesquisas",
-      "Envio digital · " + (c.data_siktd_ok || "pendente"),
-      "Cartório · " + (c.data_cartorio_envio ? "enviado " + c.data_cartorio_envio : "aguardando envio"),
-      c.chave_liberada ? ("Chave entregue em " + (c.data_chave_liberada || "—")) : "Aguardando entrega da chave",
+      "Envio digital no sistema Caixa",
+      c.data_cartorio_envio ? "Enviado ao cartório" : "Aguardando envio ao cartório",
+      c.chave_liberada ? "Chave entregue ao cliente" : "Aguardando entrega da chave",
       c.doc_recebido ? "Garantia recebida ✓" : "Processo encerrado",
     ];
-    const WFDATES = [null, c.data_assinatura, null, c.data_siktd_ok, c.data_cartorio_envio, c.data_chave_liberada, c.data_doc_recebido];
+    const _created = c.created_at ? c.created_at.slice(0, 10) : null;
+    const WFDATES = [_created, c.data_assinatura, null, c.data_siktd_ok, c.data_cartorio_envio, c.data_chave_liberada, c.data_doc_recebido];
     const curIdx = WFKEYS.indexOf(c.workflow_step);
     const pct = Math.round(((curIdx + (curIdx < 6 ? 0.5 : 1)) / 7) * 100);
 
     const stepsHtml = WFKEYS.map((k,i) => {
       const cls = i < curIdx ? "done" : i === curIdx ? "current" : "pending";
       const icon = i < curIdx ? "✓" : WFICONS[i];
-      const dt = WFDATES[i]
-        ? `<div class="wf-premium-date">${WFDATES[i]}</div>`
-        : `<div class="wf-premium-date"></div>`;
+      let dtContent = "";
+      if (WFDATES[i]) {
+        dtContent = WFDATES[i];
+      } else if (i === curIdx) {
+        dtContent = "em andamento";
+      }
+      const dt = `<div class="wf-premium-date">${dtContent}</div>`;
       return `<div class="wf-premium-step ${cls}">
         <div class="wf-premium-circle">${icon}</div>
         <div class="wf-premium-label">${WFLBLS[i]}</div>
@@ -4920,7 +5338,7 @@ const WF_PICKER_DEFS = [
   { key:"engenharia",   icon:"🏗️", label:"Engenharia",  desc:"Laudo do engenheiro" },
   { key:"aprovacao",    icon:"🏦", label:"Aprovação",   desc:"Assinatura na agência Caixa" },
   { key:"documentacao", icon:"📋", label:"Certidões",   desc:"Certidões e pesquisas" },
-  { key:"siktd",        icon:"💻", label:"SIKTD",       desc:"Envio digital no sistema Caixa" },
+  { key:"siktd",        icon:"💻", label:"SICTD",       desc:"Envio digital no sistema Caixa" },
   { key:"cartorio",     icon:"🏛️", label:"Cartório",    desc:"Autenticação física — 20 a 30 dias" },
   { key:"concluido",    icon:"🏆", label:"Concluído",   desc:"Garantia recebida, crédito liberado" },
 ];

@@ -27,10 +27,38 @@ class UnidadeOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ── Construtora ───────────────────────────────────────────────────
+class ConstrutoraCriar(BaseModel):
+    nome: str
+    cnpj: Optional[str] = None
+    telefone: Optional[str] = None
+    email: Optional[str] = None
+    responsavel: Optional[str] = None
+
+class ConstrutorUpdate(BaseModel):
+    nome: Optional[str] = None
+    cnpj: Optional[str] = None
+    telefone: Optional[str] = None
+    email: Optional[str] = None
+    responsavel: Optional[str] = None
+
+class ConstrutorOut(BaseModel):
+    id: int
+    nome: str
+    cnpj: Optional[str] = None
+    telefone: Optional[str] = None
+    email: Optional[str] = None
+    responsavel: Optional[str] = None
+    ativo: bool
+    total_empreendimentos: int = 0
+    model_config = {"from_attributes": True}
+
+
 # ── Empreendimento ────────────────────────────────────────────────
 class EmpreendimentoBase(BaseModel):
     nome: str
     construtora: Optional[str] = None
+    construtora_id: Optional[int] = None
     total_unidades: int = 0
     chave_rapida: bool = False
     unidade_id: Optional[int] = None
@@ -41,6 +69,7 @@ class EmpreendimentoCreate(EmpreendimentoBase):
 class EmpreendimentoUpdate(BaseModel):
     nome: Optional[str] = None
     construtora: Optional[str] = None
+    construtora_id: Optional[int] = None
     total_unidades: Optional[int] = None
     chave_rapida: Optional[bool] = None
     unidade_id: Optional[int] = None

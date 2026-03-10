@@ -19,6 +19,7 @@ IMV/
 │   │       ├── chaves.py        # /api/chaves/* — liberar, concluir processo
 │   │       ├── dashboard.py     # /api/dashboard/* — KPIs, relatórios, pipeline
 │   │       ├── empreendimentos.py
+│   │       ├── construtoras.py  # /api/construtoras/* — CRUD de construtoras (admin)
 │   │       ├── corretores.py
 │   │       ├── analistas.py
 │   │       ├── comissoes.py
@@ -90,7 +91,8 @@ SECRET_KEY=...
 | Base (arquivados) | ✅ | ✅ |
 | **Liberar Chaves** | ✅ | ✅ |
 | Empreendimentos | ✅ | ✅ |
-| Config. Corretores | ✅ | ✅ |
+| Corretores | ✅ | ✅ |
+| **Construtoras** | ✅ | ❌ |
 | Unidades / Cidades | ✅ | ❌ |
 | Financeiro (RCPM, Comissões) | ✅ | ❌ |
 | Sistema (Relatórios, Lixeira, Config.) | ✅ | ❌ |
@@ -99,16 +101,18 @@ SECRET_KEY=...
 
 ### Hierarquia
 ```
-Unidade (filial/cidade)
-  └── Empreendimento (loteamento)
+Construtora (empresa parceira)
+  └── Empreendimento (loteamento)  ← construtora_id FK + construtora string (legado)
         └── Cliente (processo imobiliário)
+
+Unidade (filial/cidade) ──→ Empreendimento (unidade_id FK)
 ```
 
 ### Workflow do Cliente (7 etapas)
 1. `engenharia` — Laudo do engenheiro
 2. `aprovacao` — Aprovação de crédito / assinatura Caixa
 3. `documentacao` — Certidões e pesquisas
-4. `siktd` — Envio digital sistema Caixa
+4. `siktd` — Envio digital sistema Caixa (**display: SICTD** — chave interna `siktd` não alterar no BD)
 5. `cartorio` — Cartório (autenticação física, 20-30 dias)
 6. `entrega_chave` — Entrega da chave ao cliente ← **etapa adicionada**
 7. `concluido` — Processo encerrado
@@ -142,13 +146,36 @@ ALTER TYPE workflowstep ADD VALUE IF NOT EXISTS 'entrega_chave' AFTER 'cartorio'
 `Base.metadata.create_all()` **NÃO altera tabelas existentes** — apenas cria novas.
 Para adicionar colunas em tabelas já existentes, rodar SQL manual:
 ```sql
-ALTER TABLE clientes ADD COLUMN telefone VARCHAR(20);
-ALTER TABLE clientes ADD COLUMN chave_liberada BOOLEAN DEFAULT FALSE;
-ALTER TABLE clientes ADD COLUMN data_chave_liberada DATE;
-ALTER TABLE clientes ADD COLUMN arquivado BOOLEAN DEFAULT FALSE NOT NULL;
-ALTER TABLE clientes ADD COLUMN arquivado_em TIMESTAMP;
+-- Workflow
 ALTER TYPE workflowstep ADD VALUE IF NOT EXISTS 'entrega_chave' AFTER 'cartorio';
+
+-- Colunas de clientes
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS telefone VARCHAR(20);
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS chave_liberada BOOLEAN DEFAULT FALSE;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS data_chave_liberada DATE;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS arquivado BOOLEAN DEFAULT FALSE NOT NULL;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS arquivado_em TIMESTAMP;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
+
+-- Construtoras (nova entidade — executar UMA vez)
+CREATE TABLE IF NOT EXISTS construtoras (
+  id SERIAL PRIMARY KEY, nome VARCHAR(120) NOT NULL UNIQUE,
+  cnpj VARCHAR(18), telefone VARCHAR(20), email VARCHAR(150),
+  responsavel VARCHAR(120), ativo BOOLEAN DEFAULT TRUE
+);
+UPDATE construtoras SET ativo = TRUE WHERE ativo IS NULL;
+ALTER TABLE construtoras ALTER COLUMN ativo SET NOT NULL;
+ALTER TABLE empreendimentos ADD COLUMN IF NOT EXISTS construtora_id INTEGER REFERENCES construtoras(id);
+-- Auto-migrar dados existentes:
+INSERT INTO construtoras (nome, ativo)
+  SELECT DISTINCT construtora, TRUE FROM empreendimentos
+  WHERE construtora IS NOT NULL AND construtora <> ''
+  ON CONFLICT (nome) DO NOTHING;
+UPDATE empreendimentos e SET construtora_id = c.id
+  FROM construtoras c WHERE e.construtora = c.nome AND e.construtora_id IS NULL;
 ```
+
+**Atenção:** `create_all` pode criar a tabela `construtoras` sem NOT NULL no campo `ativo` — sempre rodar o `UPDATE + ALTER` acima para garantir consistência.
 
 ## API Endpoints Principais
 
@@ -176,12 +203,28 @@ ALTER TYPE workflowstep ADD VALUE IF NOT EXISTS 'entrega_chave' AFTER 'cartorio'
 | POST | `/{id}/liberar` | Liberar chave (registra data, avança para entrega_chave) |
 | POST | `/{id}/concluir` | Concluir processo (requer chave liberada) |
 
+### Construtoras (`/api/construtoras`)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/` | Listar construtoras ativas com total de empreendimentos |
+| POST | `/` | Criar construtora |
+| PUT | `/{id}` | Atualizar construtora |
+| DELETE | `/{id}` | Desativar construtora (soft) |
+
+### RCPM (`/api/rcpm`)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/conciliacao` | Totais por empreendimento (apólices, valor RCPM, em cartório, atrasados) |
+| GET | `/em-cartorio` | Clientes atualmente em `workflow_step=cartorio` com urgência calculada |
+| GET | `/vencimentos` | Clientes com `chegada_cartorio` preenchida e situação calculada |
+
 ### Dashboard (`/api/dashboard`)
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | GET | `/` | KPIs, funil, ranking, alertas cartório |
 | GET | `/relatorio-mensal?mes=YYYY-MM` | Relatório mensal por empreendimento + ranking |
 | GET | `/relatorio-semanal?semana=YYYY-Wnn` | Relatório semanal (ex: 2026-W10) |
+| GET | `/relatorio-corretores?mes=YYYY-MM` | Performance por corretor no período |
 | GET | `/pipeline-duracao` | Média de dias por etapa do workflow (gargalos) |
 
 ## Frontend (SPA em HTML único)
@@ -201,20 +244,21 @@ ALTER TYPE workflowstep ADD VALUE IF NOT EXISTS 'entrega_chave' AFTER 'cartorio'
 - Cores do logo: fundo preto, letras brancas + amarelo `#f5c518`
 
 ### Seções do Frontend
-| Página | ID | Descrição |
-|--------|----|-----------|
-| Dashboard | `page-dashboard` | KPIs, funil, ranking, alertas |
-| Processos | `page-clientes` | Lista/edição de clientes (tabela ou cards) |
-| Base | `page-base` | Processos arquivados com filtro de data |
-| Liberar Chaves | `page-chaves` | Cards com ações por status (apto/aguardando/liberada) |
-| Empreendimentos | `page-empreendimentos` | CRUD de empreendimentos |
-| Config. Corretores | `page-corretores` | CRUD de corretores |
-| Unidades | `page-unidades` | CRUD de unidades/cidades (admin) |
-| Relatórios | `page-relatorios` | KPIs mensal/semanal + análise de pipeline |
-| Comissões | `page-comissoes` | Auto-calculado por assinaturas + lançamentos manuais |
-| RCPM | `page-rcpm` | Conciliação de seguros |
-| Configurações | `page-configuracoes` | Gestão de usuários (admin) |
-| Lixeira | `page-lixeira` | Soft-deleted (admin) |
+| Página | ID | Acesso | Descrição |
+|--------|----|--------|-----------|
+| Dashboard | `page-dashboard` | Todos | KPIs, funil, ranking, alertas |
+| Processos | `page-clientes` | Todos | Lista/edição de clientes (tabela ou cards) |
+| Base | `page-base` | Todos | Processos arquivados com filtro de data |
+| Liberar Chaves | `page-chaves` | Todos | Cards com ações por status (apto/aguardando/liberada) |
+| Empreendimentos | `page-empreendimentos` | Todos | CRUD de empreendimentos + vínculo com construtora |
+| **Construtoras** | `page-construtoras` | Admin | CRUD de construtoras (nome, CNPJ, telefone, email, responsável) |
+| Corretores | `page-corretores` | Todos | KPIs, ranking e gestão de corretores |
+| Unidades | `page-unidades` | Admin | CRUD de unidades/cidades |
+| Relatórios | `page-relatorios` | Admin | KPIs mensal/semanal + corretores + pipeline |
+| Comissões | `page-comissoes` | Admin | Auto-calculado por assinaturas + lançamentos manuais |
+| RCPM | `page-rcpm` | Admin | 3 abas: Visão Geral (agrupado por construtora), Em Cartório Agora (cards), Vencimentos |
+| Configurações | `page-configuracoes` | Admin | Gestão de usuários |
+| Lixeira | `page-lixeira` | Admin | Soft-deleted |
 
 ### Notas dos Processos
 - Exibidas diretamente no modal de edição (acima de Observações)
