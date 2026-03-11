@@ -96,10 +96,15 @@ def criar_cliente(
 ):
     if db.query(Cliente).filter(Cliente.cpf == payload.cpf).first():
         raise HTTPException(400, "CPF já cadastrado")
-    if db.query(Cliente).filter(Cliente.num_ordem == payload.num_ordem).first():
-        raise HTTPException(400, "Número de ordem já cadastrado")
+
+    # Auto-gerar num_ordem no formato YYMM.N (ex: 2603.1)
+    hoje = date.today()
+    prefixo = f"{str(hoje.year)[2:]}{hoje.month:02d}"
+    count = db.query(Cliente).filter(Cliente.num_ordem.like(f"{prefixo}.%")).count()
+    num_ordem = f"{prefixo}.{count + 1}"
 
     data = payload.model_dump()
+    data["num_ordem"] = num_ordem
     cliente = Cliente(**data)
     cliente.status = _recalc_status(cliente)
     db.add(cliente)

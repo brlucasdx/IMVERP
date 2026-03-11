@@ -1301,7 +1301,7 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
             <button class="view-btn" id="btn-card-view" onclick="setView('cards')" title="Cards">⊞</button>
           </div>
           <button class="btn btn-outline btn-sm" onclick="showToast('Exportado para Excel!','ok')">📥 Exportar</button>
-          <button class="btn btn-primary" onclick="openModal('modal-new')">+ Novo Registro</button>
+          <button class="btn btn-primary" onclick="_resetModal();openModal('modal-new')">+ Novo Registro</button>
         </div>
       </div>
 
@@ -2047,7 +2047,7 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     </div>
 
     <div class="form-row">
-      <div class="form-group"><label class="form-label required">Nº de Ordem</label><input class="form-input" id="f-num-ordem" placeholder="011"></div>
+      <div class="form-group"><label class="form-label">Nº do Processo</label><input class="form-input" id="f-num-ordem" placeholder="Gerado automaticamente" disabled style="opacity:.6;cursor:not-allowed"></div>
       <div class="form-group"><label class="form-label required">Casa (Nº)</label><input class="form-input" id="f-casa" placeholder="12"></div>
     </div>
 
@@ -3969,17 +3969,17 @@ function _resetModal() {
   _pendingPdfFiles = [];
   document.querySelector("#modal-new h3").textContent = "Novo Registro";
   document.querySelector("#modal-new .btn-primary").textContent = "Salvar Registro";
-  ["f-num-ordem","f-nome","f-cpf","f-telefone","f-casa","f-quadra","f-lote",
+  ["f-nome","f-cpf","f-telefone","f-casa","f-quadra","f-lote",
    "f-assinatura","data-chegada","f-rcpm","logradouro-input","f-avaliacao","f-venda","f-siktd-ok","f-cartorio-envio","f-observacoes"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
+  document.getElementById("f-num-ordem").value = "";
   docRecebido = false;
   document.getElementById("toggle-doc").className = "toggle";
   document.getElementById("toggle-label-text").textContent = "Não — aguardando chegada";
   document.getElementById("toggle-label-text").style.color = "";
   document.getElementById("credito-alert").style.display = "none";
-  document.getElementById("f-num-ordem").disabled = false;
   document.getElementById("f-cpf").disabled = false;
   document.getElementById("btn-ver-notas-hist").style.display = "none";
   document.getElementById("edit-notas-section").style.display = "none";
@@ -4267,16 +4267,14 @@ saveRecord = async function() {
     showToast("Logradouro obrigatório para Jardim das Flores!", ""); return;
   }
 
-  const numOrdem = document.getElementById("f-num-ordem").value.trim();
-  const nome     = document.getElementById("f-nome").value.trim();
-  const cpf      = document.getElementById("f-cpf").value.trim();
-  const casa     = document.getElementById("f-casa").value.trim();
-  if (!numOrdem || !nome || !cpf || !casa) {
+  const nome = document.getElementById("f-nome").value.trim();
+  const cpf  = document.getElementById("f-cpf").value.trim();
+  const casa = document.getElementById("f-casa").value.trim();
+  if (!nome || !cpf || !casa) {
     showToast("Preencha os campos obrigatórios!", ""); return;
   }
 
   const payload = {
-    num_ordem:         numOrdem,
     nome:              nome,
     cpf:               cpf,
     telefone:          document.getElementById("f-telefone").value.trim() || null,
@@ -4309,6 +4307,7 @@ saveRecord = async function() {
     } else {
       const novo = await apiFetch("/clientes", { method: "POST", body: JSON.stringify(payload) });
       clienteId = novo.id;
+      document.getElementById("f-num-ordem").value = novo.num_ordem;
     }
     // upload de PDFs se houver arquivos selecionados
     if (_pendingPdfFiles.length && clienteId) {
@@ -4316,7 +4315,7 @@ saveRecord = async function() {
       await Promise.all(_pendingPdfFiles.map(f => uploadPdfApi(clienteId, f)));
       _pendingPdfFiles = [];
     }
-    showToast(_editId ? "Registro atualizado com sucesso!" : "Registro salvo com sucesso!", "ok");
+    showToast(_editId ? "Registro atualizado!" : `Processo criado com sucesso!`, "ok");
     closeModal("modal-new");
     loadClientes();
     loadDashboard();

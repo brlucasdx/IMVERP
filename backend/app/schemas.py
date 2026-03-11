@@ -124,7 +124,7 @@ class AnalistaCarga(BaseModel):
 
 # ── Cliente ───────────────────────────────────────────────────────
 class ClienteCreate(BaseModel):
-    num_ordem: str
+    num_ordem: Optional[str] = None  # gerado automaticamente pelo backend
     nome: str
     cpf: str
     telefone: Optional[str] = None
