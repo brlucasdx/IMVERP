@@ -976,37 +976,47 @@ tbody tr.row-concluido:hover { background: #ecfdf5; }
 .unidade-stat .val { font-size:22px; font-weight:800; color:var(--primary); line-height:1.1; }
 
 /* ===== CONFIGURAÇÕES — USER MANAGEMENT ===== */
-.cfg-user-card {
-  background:var(--card); border:1px solid var(--border); border-radius:14px;
-  padding:20px 22px; display:flex; align-items:center; gap:16px;
-  transition:box-shadow .15s;
-}
-.cfg-user-card:hover { box-shadow:0 4px 18px rgba(0,0,0,.07); }
-.cfg-avatar-lg {
-  width:48px; height:48px; border-radius:50%; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-weight:800; font-size:16px; color:#fff; letter-spacing:-.5px;
-}
-.cfg-avatar-admin   { background:linear-gradient(135deg,#6366f1,#818cf8); }
-.cfg-avatar-operador{ background:linear-gradient(135deg,#0ea5e9,#38bdf8); }
-.cfg-user-info { flex:1; min-width:0; }
-.cfg-user-nome { font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cfg-user-email{ font-size:12px; color:var(--text-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cfg-user-meta { font-size:11px; color:var(--text-muted); margin-top:6px; }
-.cfg-role-badge {
-  display:inline-flex; align-items:center; gap:4px;
-  padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700;
-  text-transform:uppercase; letter-spacing:.5px;
-}
-.cfg-role-admin    { background:rgba(99,102,241,.12); color:#6366f1; }
-.cfg-role-operador { background:rgba(14,165,233,.12);  color:#0ea5e9; }
-.cfg-self-badge {
-  display:inline-flex; align-items:center;
-  padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700;
-  background:rgba(16,185,129,.12); color:#10b981; margin-left:6px;
-}
-.cfg-actions { display:flex; gap:6px; flex-shrink:0; }
-.pw-strength { height:4px; border-radius:99px; margin-top:6px; transition:width .3s,background .3s; }
+/* ===== CONFIGURAÇÕES — Gestão de Usuários ===== */
+.cfg-stats-bar{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.cfg-stat-card{flex:1;min-width:130px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:14px;transition:box-shadow .15s}
+.cfg-stat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.cfg-stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.cfg-stat-val{font-size:28px;font-weight:800;line-height:1}
+.cfg-stat-lbl{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.cfg-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.cfg-search-wrap{position:relative}
+.cfg-search-wrap input{padding:8px 12px 8px 34px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;color:var(--text);width:200px;transition:border-color .15s,width .2s}
+.cfg-search-wrap input:focus{outline:none;border-color:var(--primary);width:240px}
+.cfg-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none;opacity:.5}
+.cfg-usuarios-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.cfg-user-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}
+.cfg-user-card:hover{box-shadow:0 8px 28px rgba(0,0,0,.1);transform:translateY(-2px)}
+.cfg-card-accent{height:3px;width:100%}
+.cfg-user-card.role-admin .cfg-card-accent{background:linear-gradient(90deg,#6366f1,#818cf8)}
+.cfg-user-card.role-operador .cfg-card-accent{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+.cfg-user-card-body{padding:18px 18px 14px;display:flex;gap:14px;align-items:flex-start}
+.cfg-avatar-lg{width:52px;height:52px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;letter-spacing:-.5px}
+.cfg-avatar-admin{background:linear-gradient(135deg,#6366f1,#818cf8);box-shadow:0 4px 12px rgba(99,102,241,.3)}
+.cfg-avatar-operador{background:linear-gradient(135deg,#0ea5e9,#38bdf8);box-shadow:0 4px 12px rgba(14,165,233,.25)}
+.cfg-user-info{flex:1;min-width:0}
+.cfg-user-nome{font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cfg-user-email{font-size:12px;color:var(--text-muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cfg-user-meta{margin-top:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cfg-role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.cfg-role-admin{background:rgba(99,102,241,.12);color:#6366f1}
+.cfg-role-operador{background:rgba(14,165,233,.12);color:#0ea5e9}
+.cfg-self-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(16,185,129,.12);color:#10b981}
+.cfg-user-footer{padding:12px 18px;border-top:1px solid var(--border);background:rgba(0,0,0,.018);display:flex;align-items:center;justify-content:space-between}
+.cfg-created-date{font-size:11px;color:var(--text-muted)}
+.cfg-actions{display:flex;gap:6px}
+.cfg-action-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:15px;color:var(--text-muted)}
+.cfg-action-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff;transform:scale(1.07)}
+.cfg-action-btn.danger:hover{background:#ef4444;border-color:#ef4444;color:#fff}
+.pw-strength{height:4px;border-radius:99px;margin-top:6px;transition:width .3s,background .3s}
+.pw-input-wrap{position:relative}
+.pw-input-wrap .form-input{padding-right:40px !important}
+.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted);padding:0;line-height:1;transition:color .15s}
+.pw-toggle:hover{color:var(--primary)}
 
 /* ===== LOGIN OVERLAY ===== */
 .login-overlay {
@@ -1831,20 +1841,51 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
       <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
         <div>
           <h2>Configurações</h2>
-          <p>Gestão de usuários e acessos do sistema</p>
+          <p>Gestão de usuários e acessos — somente administradores</p>
         </div>
         <button class="btn btn-primary" onclick="abrirModalUsuario()">+ Novo Usuário</button>
       </div>
 
+      <!-- Stats bar -->
+      <div class="cfg-stats-bar">
+        <div class="cfg-stat-card">
+          <div class="cfg-stat-icon" style="background:rgba(99,102,241,.1)">👥</div>
+          <div>
+            <div class="cfg-stat-val" id="cfg-stat-total">–</div>
+            <div class="cfg-stat-lbl">Total de Usuários</div>
+          </div>
+        </div>
+        <div class="cfg-stat-card">
+          <div class="cfg-stat-icon" style="background:rgba(99,102,241,.1)">🛡️</div>
+          <div>
+            <div class="cfg-stat-val" id="cfg-stat-admins">–</div>
+            <div class="cfg-stat-lbl">Administradores</div>
+          </div>
+        </div>
+        <div class="cfg-stat-card">
+          <div class="cfg-stat-icon" style="background:rgba(14,165,233,.1)">🖥️</div>
+          <div>
+            <div class="cfg-stat-val" id="cfg-stat-operadores">–</div>
+            <div class="cfg-stat-lbl">Operadores</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Seção usuários -->
       <div class="section-card">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-          <span style="font-size:16px">👥</span>
-          <span style="font-weight:700;font-size:14px">Usuários do Sistema</span>
-          <span id="cfg-usuarios-count" style="background:var(--primary-light);color:#fff;border-radius:99px;padding:1px 9px;font-size:11px;font-weight:700"></span>
+        <div class="cfg-toolbar">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">👥</span>
+            <span style="font-weight:700;font-size:15px">Usuários do Sistema</span>
+            <span id="cfg-usuarios-count" style="background:var(--primary-light);color:#fff;border-radius:99px;padding:1px 9px;font-size:11px;font-weight:700"></span>
+          </div>
+          <div class="cfg-search-wrap">
+            <span class="cfg-search-icon">🔍</span>
+            <input type="text" id="cfg-search" placeholder="Buscar por nome ou email..." oninput="_filterUsuarios(this.value)">
+          </div>
         </div>
-        <div id="cfg-usuarios-lista" style="display:flex;flex-direction:column;gap:10px">
-          <div style="padding:24px;text-align:center;color:var(--text-muted)">Carregando...</div>
+        <div id="cfg-usuarios-lista" class="cfg-usuarios-grid">
+          <div style="padding:24px;text-align:center;color:var(--text-muted);grid-column:1/-1">Carregando...</div>
         </div>
       </div>
 
@@ -1858,7 +1899,7 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
      MODAL: CRIAR / EDITAR USUÁRIO
 =================================================================== -->
 <div class="modal-overlay" id="modal-usuario">
-  <div class="modal" style="max-width:440px">
+  <div class="modal" style="max-width:460px">
     <div class="modal-header">
       <h3 id="modal-usuario-titulo">Novo Usuário</h3>
       <button class="modal-close" onclick="closeModal('modal-usuario')">✕</button>
@@ -1875,10 +1916,10 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
       <div class="form-group">
         <label class="form-label required">Nível de acesso</label>
         <select class="form-input" id="uf-tipo">
-          <option value="operador">Operador — acesso operacional</option>
-          <option value="admin">Administrador — acesso total</option>
+          <option value="operador">🖥️ Operador — acesso operacional</option>
+          <option value="admin">🛡️ Administrador — acesso total</option>
         </select>
-        <div id="uf-tipo-aviso" style="display:none;margin-top:6px;font-size:11px;color:#f59e0b;background:rgba(245,158,11,.1);padding:6px 10px;border-radius:6px">
+        <div id="uf-tipo-aviso" style="display:none;margin-top:8px;font-size:12px;color:#b45309;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);padding:8px 12px;border-radius:8px">
           ⚠️ Administradores têm acesso total ao sistema, incluindo dados financeiros e gestão de usuários.
         </div>
       </div>
@@ -1887,17 +1928,23 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
         <div class="form-row">
           <div class="form-group">
             <label class="form-label required">Senha</label>
-            <input class="form-input" id="uf-senha" type="password" placeholder="mínimo 6 caracteres" oninput="_checkPwStrength()">
+            <div class="pw-input-wrap">
+              <input class="form-input" id="uf-senha" type="password" placeholder="mín. 6 caracteres" oninput="_checkPwStrength()">
+              <button class="pw-toggle" type="button" onclick="_togglePw('uf-senha',this)" tabindex="-1">👁</button>
+            </div>
             <div id="pw-strength-bar" class="pw-strength" style="width:0;background:#e5e7eb"></div>
             <div id="pw-strength-label" style="font-size:10px;color:var(--text-muted);margin-top:3px"></div>
           </div>
           <div class="form-group">
             <label class="form-label required">Confirmar senha</label>
-            <input class="form-input" id="uf-senha-conf" type="password" placeholder="repita a senha">
+            <div class="pw-input-wrap">
+              <input class="form-input" id="uf-senha-conf" type="password" placeholder="repita a senha">
+              <button class="pw-toggle" type="button" onclick="_togglePw('uf-senha-conf',this)" tabindex="-1">👁</button>
+            </div>
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:10px;margin-top:8px">
+      <div style="display:flex;gap:10px;margin-top:16px">
         <button class="btn btn-outline" style="flex:1" onclick="closeModal('modal-usuario')">Cancelar</button>
         <button class="btn btn-primary" style="flex:2" onclick="salvarUsuario()">Salvar</button>
       </div>
@@ -1909,27 +1956,35 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
      MODAL: REDEFINIR SENHA
 =================================================================== -->
 <div class="modal-overlay" id="modal-reset-senha">
-  <div class="modal" style="max-width:380px">
+  <div class="modal" style="max-width:400px">
     <div class="modal-header">
-      <h3>Redefinir Senha</h3>
+      <h3>🔑 Redefinir Senha</h3>
       <button class="modal-close" onclick="closeModal('modal-reset-senha')">✕</button>
     </div>
     <div style="padding:0 24px 24px">
-      <div style="padding:12px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:var(--text-muted);margin-bottom:18px">
-        🔑 Redefinindo senha de: <strong id="reset-user-nome" style="color:var(--text)"></strong>
+      <div style="padding:12px 16px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:13px;color:var(--text-muted);margin-bottom:20px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">👤</span>
+        <span>Redefinindo senha de: <strong id="reset-user-nome" style="color:var(--text)"></strong></span>
       </div>
       <div class="form-group">
         <label class="form-label required">Nova senha</label>
-        <input class="form-input" id="rf-senha" type="password" placeholder="mínimo 6 caracteres" oninput="_checkResetStrength()">
+        <div class="pw-input-wrap">
+          <input class="form-input" id="rf-senha" type="password" placeholder="mín. 6 caracteres" oninput="_checkResetStrength()">
+          <button class="pw-toggle" type="button" onclick="_togglePw('rf-senha',this)" tabindex="-1">👁</button>
+        </div>
         <div id="rf-strength-bar" class="pw-strength" style="width:0;background:#e5e7eb"></div>
+        <div id="rf-strength-label" style="font-size:10px;color:var(--text-muted);margin-top:3px"></div>
       </div>
       <div class="form-group">
         <label class="form-label required">Confirmar nova senha</label>
-        <input class="form-input" id="rf-senha-conf" type="password" placeholder="repita a senha">
+        <div class="pw-input-wrap">
+          <input class="form-input" id="rf-senha-conf" type="password" placeholder="repita a senha">
+          <button class="pw-toggle" type="button" onclick="_togglePw('rf-senha-conf',this)" tabindex="-1">👁</button>
+        </div>
       </div>
-      <div style="display:flex;gap:10px;margin-top:8px">
+      <div style="display:flex;gap:10px;margin-top:16px">
         <button class="btn btn-outline" style="flex:1" onclick="closeModal('modal-reset-senha')">Cancelar</button>
-        <button class="btn btn-primary" style="flex:2" onclick="confirmarResetSenha()">Redefinir</button>
+        <button class="btn btn-primary" style="flex:2" onclick="confirmarResetSenha()">Redefinir Senha</button>
       </div>
     </div>
   </div>
@@ -5766,62 +5821,83 @@ function _checkPwStrength() {
   _renderStrength("pw-strength-bar", "pw-strength-label", document.getElementById("uf-senha").value);
 }
 function _checkResetStrength() {
-  _renderStrength("rf-strength-bar", null, document.getElementById("rf-senha").value);
+  _renderStrength("rf-strength-bar", "rf-strength-label", document.getElementById("rf-senha").value);
+}
+
+function _togglePw(inputId, btn) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  if (el.type === "password") { el.type = "text"; btn.textContent = "🙈"; }
+  else { el.type = "password"; btn.textContent = "👁"; }
+}
+
+function _filterUsuarios(q) {
+  const query = q.toLowerCase().trim();
+  document.querySelectorAll("#cfg-usuarios-lista .cfg-user-card").forEach(card => {
+    const nome  = card.dataset.nome  || "";
+    const email = card.dataset.email || "";
+    card.style.display = (!query || nome.includes(query) || email.includes(query)) ? "" : "none";
+  });
 }
 
 async function loadUsuarios() {
   const lista = document.getElementById("cfg-usuarios-lista");
   if (!lista) return;
-  lista.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted)">Carregando...</div>`;
+  lista.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-muted);grid-column:1/-1">Carregando...</div>`;
+  const searchEl = document.getElementById("cfg-search");
+  if (searchEl) searchEl.value = "";
   try {
     const usuarios = await apiFetch("/auth/usuarios");
-    document.getElementById("cfg-usuarios-count").textContent = usuarios.length;
+    const admins = usuarios.filter(u => u.tipo === "admin").length;
+    const operadores = usuarios.filter(u => u.tipo === "operador").length;
+    const setEl = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    setEl("cfg-usuarios-count", usuarios.length);
+    setEl("cfg-stat-total", usuarios.length);
+    setEl("cfg-stat-admins", admins);
+    setEl("cfg-stat-operadores", operadores);
     if (!usuarios.length) {
-      lista.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted)">Nenhum usuário encontrado.</div>`;
+      lista.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-muted);grid-column:1/-1">Nenhum usuário encontrado.</div>`;
       return;
     }
     lista.innerHTML = usuarios.map(u => {
       const isSelf = _currentUser && _currentUser.id === u.id;
       const initials = u.nome.trim().split(/\s+/).map(p => p[0]).join("").toUpperCase().slice(0,2);
-      const avatarCls = u.tipo === "admin" ? "cfg-avatar-admin" : "cfg-avatar-operador";
-      const roleCls   = u.tipo === "admin" ? "cfg-role-admin"   : "cfg-role-operador";
-      const roleLabel = u.tipo === "admin" ? "Admin" : "Operador";
-      const criadoEm  = u.created_at
+      const criadoEm = u.created_at
         ? new Date(u.created_at).toLocaleDateString("pt-BR", {day:"2-digit",month:"short",year:"numeric"})
         : "–";
+      const roleLabel = u.tipo === "admin" ? "🛡️ Admin" : "🖥️ Operador";
+      const nomeEsc = u.nome.replace(/'/g,"\\'");
       return `
-        <div class="cfg-user-card">
-          <div class="cfg-avatar-lg ${avatarCls}">${initials}</div>
-          <div class="cfg-user-info">
-            <div class="cfg-user-nome">
-              ${u.nome}
-              ${isSelf ? '<span class="cfg-self-badge">Você</span>' : ""}
-            </div>
-            <div class="cfg-user-email">${u.email}</div>
-            <div class="cfg-user-meta">
-              <span class="cfg-role-badge ${roleCls}">${roleLabel}</span>
-              <span style="margin-left:8px">📅 ${criadoEm}</span>
+        <div class="cfg-user-card role-${u.tipo}" data-nome="${u.nome.toLowerCase()}" data-email="${u.email.toLowerCase()}">
+          <div class="cfg-card-accent"></div>
+          <div class="cfg-user-card-body">
+            <div class="cfg-avatar-lg cfg-avatar-${u.tipo}">${initials}</div>
+            <div class="cfg-user-info">
+              <div class="cfg-user-nome">
+                ${u.nome}
+                ${isSelf ? '<span class="cfg-self-badge">Você</span>' : ""}
+              </div>
+              <div class="cfg-user-email">${u.email}</div>
+              <div class="cfg-user-meta">
+                <span class="cfg-role-badge cfg-role-${u.tipo}">${roleLabel}</span>
+              </div>
             </div>
           </div>
-          <div class="cfg-actions">
-            <button class="btn btn-outline btn-sm" title="Editar usuário"
-              onclick="abrirModalUsuario(${u.id},'${u.nome.replace(/'/g,"\\'")}','${u.email}','${u.tipo}')">
-              ✏️
-            </button>
-            <button class="btn btn-outline btn-sm" title="Redefinir senha"
-              onclick="abrirResetSenha(${u.id},'${u.nome.replace(/'/g,"\\'")}')">
-              🔑
-            </button>
-            ${isSelf ? "" : `
-            <button class="btn btn-outline btn-sm" style="color:var(--danger)" title="Desativar usuário"
-              onclick="desativarUsuario(${u.id},'${u.nome.replace(/'/g,"\\'")}')">
-              🗑️
-            </button>`}
+          <div class="cfg-user-footer">
+            <div class="cfg-created-date">📅 ${criadoEm}</div>
+            <div class="cfg-actions">
+              <button class="cfg-action-btn" title="Editar usuário"
+                onclick="abrirModalUsuario(${u.id},'${nomeEsc}','${u.email}','${u.tipo}')">✏️</button>
+              <button class="cfg-action-btn" title="Redefinir senha"
+                onclick="abrirResetSenha(${u.id},'${nomeEsc}')">🔑</button>
+              ${isSelf ? "" : `<button class="cfg-action-btn danger" title="Desativar usuário"
+                onclick="desativarUsuario(${u.id},'${nomeEsc}')">🗑️</button>`}
+            </div>
           </div>
         </div>`;
     }).join("");
   } catch(e) {
-    lista.innerHTML = `<div style="padding:24px;text-align:center;color:var(--danger)">Erro ao carregar usuários.</div>`;
+    lista.innerHTML = `<div style="padding:32px;text-align:center;color:var(--danger);grid-column:1/-1">Erro ao carregar usuários.</div>`;
   }
 }
 
@@ -5836,6 +5912,9 @@ function abrirModalUsuario(id, nome, email, tipo) {
   document.getElementById("pw-strength-bar").style.width = "0%";
   document.getElementById("pw-strength-label").textContent = "";
   document.getElementById("uf-tipo-aviso").style.display = "none";
+  // Reset pw toggles
+  ["uf-senha","uf-senha-conf"].forEach(id => { const el = document.getElementById(id); if(el) el.type = "password"; });
+  document.querySelectorAll("#uf-senha-section .pw-toggle").forEach(b => b.textContent = "👁");
 
   // Na edição não mostra o campo de senha (usa modal de reset separado)
   document.getElementById("uf-senha-section").style.display = id ? "none" : "block";
@@ -5900,6 +5979,10 @@ function abrirResetSenha(userId, nome) {
   document.getElementById("rf-senha").value = "";
   document.getElementById("rf-senha-conf").value = "";
   document.getElementById("rf-strength-bar").style.width = "0%";
+  document.getElementById("rf-strength-label").textContent = "";
+  // Reset pw toggles
+  ["rf-senha","rf-senha-conf"].forEach(id => { const el = document.getElementById(id); if(el) el.type = "password"; });
+  document.querySelectorAll("#modal-reset-senha .pw-toggle").forEach(b => b.textContent = "👁");
   document.getElementById("modal-reset-senha").classList.add("open");
 }
 
