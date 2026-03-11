@@ -63,7 +63,20 @@ Em produção (Railway), usar `DATABASE_URL` direto:
 ```
 DATABASE_URL=postgresql://user:pass@host:5432/dbname
 SECRET_KEY=...
+ALLOWED_ORIGINS=https://imverp-production.up.railway.app
 ```
+
+> **⚠️ `ALLOWED_ORIGINS` é obrigatório em produção.** Sem ela, o CORS cai para `["*"]` (qualquer origem).
+
+## Segurança
+
+- **`SecurityHeadersMiddleware`** em `main.py` injeta: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `X-XSS-Protection`, `Referrer-Policy`
+- **CORS** restrito via `ALLOWED_ORIGINS` env var — **nunca deixar sem definir em produção**
+- **`BaseHTTPMiddleware`** deve ser importado de `starlette.middleware.base` (não `fastapi.middleware.base`)
+- **Rate limit de login:** 5 tentativas/minuto por IP
+- **Lixeira e Restaurar** exigem `require_admin` — operadores não têm acesso
+- **Download de PDF:** filename sanitizado antes de ir para o header `Content-Disposition`
+- **`UsuarioOut`** não expõe `created_at`
 
 ## Autenticação
 
