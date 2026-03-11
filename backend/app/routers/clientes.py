@@ -378,7 +378,7 @@ def excluir_pdf(
     cliente = db.get(Cliente, cliente_id)
     if cliente:
         cliente.pdf_path = restantes.filename if restantes else None
-    _log(db, cliente_id, "pdf_enviado",
+    _log(db, cliente_id, "pdf_excluido",
          f"{filename} excluído por {current_user.nome}",
          current_user.id)
     db.commit()

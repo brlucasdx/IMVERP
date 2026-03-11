@@ -244,6 +244,15 @@ class LogOut(BaseModel):
     usuario: Optional[UsuarioMinOut] = None
     model_config = {"from_attributes": True}
 
+class LogSistemaOut(BaseModel):
+    id: int
+    cliente_id: int
+    cliente_nome: str
+    usuario_nome: Optional[str] = None
+    acao: str
+    detalhes: Optional[str]
+    created_at: datetime
+
 class NotaCreate(BaseModel):
     texto: str
 
