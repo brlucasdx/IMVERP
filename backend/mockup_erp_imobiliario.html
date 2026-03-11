@@ -1307,7 +1307,7 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
 
       <div class="filter-bar">
         <input class="filter-input" placeholder="🔍  Buscar nome, CPF, casa, rua... (pesquisa global)" id="srch" oninput="filterTable()">
-        <select class="filter-select" id="flt-analista" onchange="filterTable()">
+        <select class="filter-select" id="flt-analista" onchange="filterTable()" onfocus="if(this.options.length<=1)loadFormSelects()">
           <option value="">Todos os Analistas</option>
         </select>
         <select class="filter-select" id="flt-status" onchange="filterTable()">
