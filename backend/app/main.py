@@ -72,7 +72,7 @@ app.include_router(unidades.router)
 app.include_router(construtoras.router)
 
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 def health():
     return {"status": "ok", "version": "2.0.0"}
 
