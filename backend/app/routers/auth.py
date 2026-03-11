@@ -113,13 +113,12 @@ def criar_usuario(
     db.commit()
     db.refresh(user)
 
-    # Operadores ganham comissão por processo → garantir registro em analistas
-    if data.tipo == TipoUsuario.operador:
-        ja_existe = db.query(Analista).filter(Analista.nome == data.nome.strip()).first()
-        if not ja_existe:
-            analista = Analista(nome=data.nome.strip(), email=data.email.lower().strip())
-            db.add(analista)
-            db.commit()
+    # Garante registro em analistas para aparecer nos filtros de processos
+    ja_existe = db.query(Analista).filter(Analista.email == data.email.lower().strip()).first()
+    if not ja_existe:
+        analista = Analista(nome=data.nome.strip(), email=data.email.lower().strip())
+        db.add(analista)
+        db.commit()
 
     return user
 
@@ -140,7 +139,12 @@ def atualizar_usuario(
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
     if data.nome:
-        user.nome = data.nome.strip()
+        novo_nome = data.nome.strip()
+        # sincroniza nome no analista vinculado (se existir)
+        analista = db.query(Analista).filter(Analista.email == user.email).first()
+        if analista:
+            analista.nome = novo_nome
+        user.nome = novo_nome
     if data.email:
         conflict = db.query(Usuario).filter(
             Usuario.email == data.email.lower().strip(),
@@ -148,7 +152,12 @@ def atualizar_usuario(
         ).first()
         if conflict:
             raise HTTPException(status_code=400, detail="Email já em uso por outro usuário")
-        user.email = data.email.lower().strip()
+        novo_email = data.email.lower().strip()
+        # sincroniza email no analista
+        analista = db.query(Analista).filter(Analista.email == user.email).first()
+        if analista:
+            analista.email = novo_email
+        user.email = novo_email
     if data.tipo is not None:
         user.tipo = data.tipo
 
@@ -196,5 +205,9 @@ def desativar_usuario(
         raise HTTPException(status_code=404, detail="Não encontrado")
 
     user.ativo = False
+    # desativa o analista vinculado pelo email (remove do filtro de processos)
+    analista = db.query(Analista).filter(Analista.email == user.email).first()
+    if analista:
+        analista.ativo = False
     db.commit()
     return {"ok": True}
