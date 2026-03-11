@@ -234,7 +234,8 @@ class ComissaoLancamento(Base):
     __tablename__ = "comissao_lancamentos"
 
     id           = Column(Integer, primary_key=True, index=True)
-    analista_id  = Column(Integer, ForeignKey("analistas.id"), nullable=False)
+    analista_id  = Column(Integer, ForeignKey("analistas.id"), nullable=True)
+    corretor_id  = Column(Integer, ForeignKey("corretores.id"), nullable=True)
     descricao    = Column(String(200), nullable=False)
     valor        = Column(Numeric(10, 2), nullable=False)
     data_ref     = Column(Date, nullable=False)   # mês de referência (qualquer dia do mês)
@@ -242,4 +243,5 @@ class ComissaoLancamento(Base):
     data_pagamento = Column(Date)
     created_at   = Column(DateTime, default=datetime.utcnow)
 
-    analista = relationship("Analista")
+    analista = relationship("Analista", foreign_keys=[analista_id])
+    corretor = relationship("Corretor", foreign_keys=[corretor_id])

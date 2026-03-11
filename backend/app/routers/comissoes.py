@@ -155,10 +155,18 @@ def get_comissoes_corretores(
 # ── Lançamentos manuais ────────────────────────────────────────────
 
 def _to_lancamento_out(l: ComissaoLancamento) -> LancamentoOut:
+    if l.corretor_id:
+        pessoa_nome = l.corretor.nome if l.corretor else "?"
+        tipo = "corretor"
+    else:
+        pessoa_nome = l.analista.nome if l.analista else "?"
+        tipo = "operador"
     return LancamentoOut(
         id=l.id,
         analista_id=l.analista_id,
-        analista_nome=l.analista.nome,
+        corretor_id=l.corretor_id,
+        pessoa_nome=pessoa_nome,
+        tipo=tipo,
         descricao=l.descricao,
         valor=l.valor,
         data_ref=l.data_ref,
@@ -190,9 +198,14 @@ def listar_lancamentos(
 
 @router.post("/lancamentos", response_model=LancamentoOut, status_code=201)
 def criar_lancamento(payload: LancamentoCreate, db: Session = Depends(get_db)):
-    analista = db.get(Analista, payload.analista_id)
-    if not analista:
-        raise HTTPException(404, "Analista não encontrado")
+    if not payload.analista_id and not payload.corretor_id:
+        raise HTTPException(400, "Informe analista_id ou corretor_id")
+    if payload.analista_id:
+        if not db.get(Analista, payload.analista_id):
+            raise HTTPException(404, "Analista não encontrado")
+    if payload.corretor_id:
+        if not db.get(Corretor, payload.corretor_id):
+            raise HTTPException(404, "Corretor não encontrado")
     l = ComissaoLancamento(**payload.model_dump())
     db.add(l)
     db.commit()

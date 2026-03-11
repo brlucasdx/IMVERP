@@ -380,15 +380,18 @@ class ComissoesCorretoresOut(BaseModel):
 
 # ── Lançamentos manuais de comissão ───────────────────────────────
 class LancamentoCreate(BaseModel):
-    analista_id: int
+    analista_id: Optional[int] = None
+    corretor_id: Optional[int] = None
     descricao: str
     valor: Decimal
     data_ref: date   # qualquer dia do mês de referência
 
 class LancamentoOut(BaseModel):
     id: int
-    analista_id: int
-    analista_nome: str
+    analista_id: Optional[int] = None
+    corretor_id: Optional[int] = None
+    pessoa_nome: str
+    tipo: str  # "operador" | "corretor"
     descricao: str
     valor: Decimal
     data_ref: date

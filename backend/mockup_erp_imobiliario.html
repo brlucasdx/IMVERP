@@ -2041,7 +2041,6 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
     <div class="form-group" id="edit-notas-section" style="display:none">
       <label class="form-label" style="display:flex;align-items:center;gap:6px">
         📝 Notas do Processo
-        <span style="font-size:10px;font-weight:400;color:var(--text-muted)">(visível a todos os operadores · só admin exclui)</span>
       </label>
       <div id="edit-notas-lista" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:8px 8px 0 0;border-bottom:none;background:var(--bg);padding:10px 12px;font-size:12px">
         <span style="color:var(--text-muted)">Carregando...</span>
@@ -2238,8 +2237,19 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
       <button class="modal-close" onclick="closeModal('modal-lancamento')">✕</button>
     </div>
     <div class="form-group">
-      <label class="form-label required">Analista</label>
-      <select class="form-input" id="lanc-analista"></select>
+      <label class="form-label required">Tipo</label>
+      <div style="display:flex;gap:8px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;flex:1;justify-content:center" id="lanc-tipo-op-lbl">
+          <input type="radio" name="lanc-tipo" value="operador" id="lanc-tipo-op" checked onchange="_lancTipoChange()" style="accent-color:var(--primary)"> Operador
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;flex:1;justify-content:center" id="lanc-tipo-cor-lbl">
+          <input type="radio" name="lanc-tipo" value="corretor" id="lanc-tipo-cor" onchange="_lancTipoChange()" style="accent-color:var(--primary)"> Corretor
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label required" id="lanc-pessoa-label">Operador</label>
+      <select class="form-input" id="lanc-pessoa"></select>
     </div>
     <div class="form-group">
       <label class="form-label required">Descrição</label>
@@ -2374,7 +2384,7 @@ const PAGE_INFO = {
   unidades:        ['Unidades & Cidades','Filiais por cidade — filtros e métricas por unidade'],
   corretores:      ['Configuração de Corretores','Ranking e metas'],
   rcpm:            ['Relatórios p/ Construtores','Conciliação RCPM e chegadas de cartório'],
-  comissoes:       ['Comissões','Calculadora de comissões por analista · mês de referência'],
+  comissoes:       ['Comissões','Calculadora de comissões · mês de referência'],
   chaves:          ['Liberar Chaves','Relatório semanal de assinaturas para construtor'],
   relatorios:      ['Relatórios','Exportação e análise de dados'],
   configuracoes:   ['Configurações','Gestão de usuários e acessos — somente administradores'],
@@ -4696,11 +4706,18 @@ async function loadComissoes() {
         const st   = c.status_meta;
         const cor  = st==="superou"?"var(--info)":st==="ok"?"var(--success)":"var(--danger)";
         const txtMeta = st==="superou"?"🏆 Superou a meta!":st==="ok"?"✓ Meta atingida":"↓ Abaixo da meta";
+        const extras = lancamentos.filter(l => l.corretor_id === c.corretor_id);
+        const totalExtra = extras.reduce((s,l) => s + Number(l.valor), 0);
+        const totalGeral = Number(c.valor_acumulado) + totalExtra;
         return `
           <div class="comissao-card ${st}">
             <div class="comissao-nome">${c.nome}</div>
             <div class="comissao-sub">Meta: ${c.meta_mensal} vendas/mês · R$ ${Number(c.comissao_por_venda).toFixed(2).replace(".",",")} / venda</div>
-            <div class="comissao-val">R$ ${Number(c.valor_acumulado).toFixed(2).replace(".",",")}<small> total do mês</small></div>
+            <div class="comissao-val">R$ ${totalGeral.toFixed(2).replace(".",",")}<small> total do mês</small></div>
+            <div style="font-size:11px;color:var(--text-muted);margin:2px 0 8px">
+              Vendas: R$ ${Number(c.valor_acumulado).toFixed(2).replace(".",",")}
+              ${totalExtra ? ` + Extras: R$ ${totalExtra.toFixed(2).replace(".",",")}` : ""}
+            </div>
             <div class="comissao-meta">
               <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
                 <span><strong>${c.vendas_mes}</strong> vendas assinadas</span>
@@ -4747,7 +4764,10 @@ async function loadComissoes() {
           </tr></thead>
           <tbody>${lancamentos.map(l => `
             <tr style="border-bottom:1px solid var(--border);font-size:13px" id="lanc-row-${l.id}">
-              <td style="padding:10px 4px;font-weight:600">${l.analista_nome}</td>
+              <td style="padding:10px 4px;font-weight:600">
+                ${l.pessoa_nome}
+                <span style="font-size:10px;padding:1px 5px;border-radius:4px;margin-left:4px;${l.tipo==='corretor'?'background:#ede9fe;color:#7c3aed':'background:#e0f2fe;color:#0369a1'}">${l.tipo==='corretor'?'Corretor':'Operador'}</span>
+              </td>
               <td style="padding:10px 4px;color:var(--text-muted)">${l.descricao}</td>
               <td style="padding:10px 4px;text-align:right;font-weight:700;color:var(--success)">R$ ${Number(l.valor).toFixed(2).replace(".",",")}</td>
               <td style="padding:10px 4px;text-align:center">
@@ -4773,15 +4793,20 @@ async function loadComissoes() {
 }
 
 // ── Modal lançamento manual ────────────────────────────────────────
+let _lancAnalistas = [];
+let _lancCorretores = [];
+
 async function abrirModalLancamento() {
-  // popula select de analistas
-  const sel = document.getElementById("lanc-analista");
-  if (sel && !sel.options.length) {
-    try {
-      const analistas = await apiFetch("/analistas");
-      sel.innerHTML = analistas.map(a => `<option value="${a.id}">${a.nome}</option>`).join("");
-    } catch(_) {}
-  }
+  // carrega listas se ainda não carregadas
+  try {
+    if (!_lancAnalistas.length) _lancAnalistas = await apiFetch("/analistas");
+    if (!_lancCorretores.length) _lancCorretores = await apiFetch("/corretores");
+  } catch(_) {}
+
+  // reseta para Operador
+  document.getElementById("lanc-tipo-op").checked = true;
+  _lancTipoChange();
+
   // pré-preenche mês com o mês selecionado
   const [ano, mes] = _getMesComissao();
   if (ano) document.getElementById("lanc-data").value = `${ano}-${mes.padStart(2,"0")}`;
@@ -4790,20 +4815,45 @@ async function abrirModalLancamento() {
   openModal("modal-lancamento");
 }
 
+function _lancTipoChange() {
+  const tipo = document.querySelector('input[name="lanc-tipo"]:checked')?.value || "operador";
+  const sel = document.getElementById("lanc-pessoa");
+  const lbl = document.getElementById("lanc-pessoa-label");
+  const lblOp = document.getElementById("lanc-tipo-op-lbl");
+  const lblCor = document.getElementById("lanc-tipo-cor-lbl");
+
+  if (tipo === "operador") {
+    lbl.textContent = "Operador";
+    sel.innerHTML = _lancAnalistas.map(a => `<option value="${a.id}">${a.nome}</option>`).join("");
+    lblOp.style.borderColor = "var(--primary)";
+    lblOp.style.background = "color-mix(in srgb, var(--primary) 8%, transparent)";
+    lblCor.style.borderColor = "var(--border)";
+    lblCor.style.background = "";
+  } else {
+    lbl.textContent = "Corretor";
+    sel.innerHTML = _lancCorretores.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+    lblCor.style.borderColor = "var(--primary)";
+    lblCor.style.background = "color-mix(in srgb, var(--primary) 8%, transparent)";
+    lblOp.style.borderColor = "var(--border)";
+    lblOp.style.background = "";
+  }
+}
+
 async function salvarLancamento() {
-  const analista_id = parseInt(document.getElementById("lanc-analista").value);
-  const descricao   = document.getElementById("lanc-descricao").value.trim();
-  const valor       = parseFloat(document.getElementById("lanc-valor").value);
-  const dataRef     = document.getElementById("lanc-data").value; // "2026-03"
-  if (!analista_id || !descricao || !valor || !dataRef) {
+  const tipo      = document.querySelector('input[name="lanc-tipo"]:checked')?.value || "operador";
+  const pessoa_id = parseInt(document.getElementById("lanc-pessoa").value);
+  const descricao = document.getElementById("lanc-descricao").value.trim();
+  const valor     = parseFloat(document.getElementById("lanc-valor").value);
+  const dataRef   = document.getElementById("lanc-data").value; // "2026-03"
+  if (!pessoa_id || !descricao || !valor || !dataRef) {
     showToast("Preencha todos os campos!", ""); return;
   }
-  const data_ref = `${dataRef}-01`; // primeiro dia do mês
+  const data_ref = `${dataRef}-01`;
+  const body = tipo === "operador"
+    ? { analista_id: pessoa_id, descricao, valor, data_ref }
+    : { corretor_id: pessoa_id, descricao, valor, data_ref };
   try {
-    await apiFetch("/comissoes/lancamentos", {
-      method: "POST",
-      body: JSON.stringify({ analista_id, descricao, valor, data_ref }),
-    });
+    await apiFetch("/comissoes/lancamentos", { method: "POST", body: JSON.stringify(body) });
     showToast("Lançamento salvo!", "ok");
     closeModal("modal-lancamento");
     loadComissoes();
