@@ -79,6 +79,8 @@ SECRET_KEY=...
 | Lucas | lucas@imv.com | admin | hn123 |
 | Simone | simone@imv.com | operador | hn123 |
 | Markele | markele@imv.com | operador | hn123 |
+| Teste | teste@imv.com | admin | — (temporário, remover) |
+| Jubileu teste | jubileu@imv.com | operador | — (temporário, remover) |
 
 > **⚠️ Trocar as senhas padrão antes de ir a produção.**
 
@@ -157,6 +159,16 @@ ALTER TABLE clientes ADD COLUMN IF NOT EXISTS arquivado BOOLEAN DEFAULT FALSE NO
 ALTER TABLE clientes ADD COLUMN IF NOT EXISTS arquivado_em TIMESTAMP;
 ALTER TABLE clientes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
 
+-- PDFs dos clientes (múltiplos por cliente, armazenados como bytea)
+CREATE TABLE IF NOT EXISTS cliente_pdfs (
+  id SERIAL PRIMARY KEY,
+  cliente_id INTEGER NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
+  filename VARCHAR(255) NOT NULL,
+  data BYTEA NOT NULL,
+  tamanho INTEGER,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Construtoras (nova entidade — executar UMA vez)
 CREATE TABLE IF NOT EXISTS construtoras (
   id SERIAL PRIMARY KEY, nome VARCHAR(120) NOT NULL UNIQUE,
@@ -190,7 +202,10 @@ UPDATE empreendimentos e SET construtora_id = c.id
 | POST | `/{id}/arquivar` | Mover para Base (requer concluido + chave entregue) |
 | POST | `/{id}/desarquivar` | Voltar para Processos |
 | POST | `/{id}/restaurar` | Restaurar da lixeira (admin) |
-| POST | `/{id}/upload` | Upload do contrato PDF |
+| POST | `/{id}/upload` | Upload de PDF (até 5 arquivos simultâneos, 5 MB cada) |
+| GET | `/{id}/pdfs` | Listar PDFs do cliente |
+| GET | `/{id}/pdfs/{pdf_id}` | Download de PDF |
+| DELETE | `/{id}/pdfs/{pdf_id}` | Excluir PDF (admin) |
 | GET | `/{id}/logs` | Histórico de atividades |
 | GET | `/{id}/notas` | Notas do processo |
 | POST | `/{id}/notas` | Adicionar nota |
@@ -297,6 +312,57 @@ Normalização para comparação: `enum.value` e `Decimal` como string.
 2. Adicionar PostgreSQL plugin
 3. Variáveis de ambiente: `DATABASE_URL` (auto), `SECRET_KEY`
 4. Procfile já configurado: `web: uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+### Atualizar produção (novo deploy)
+Basta fazer `git push origin main` — o Railway detecta automaticamente e redeploya.
+
+**Se a atualização mexeu no banco (nova coluna/tabela):** rodar SQL manual no Railway:
+1. Acessa `railway.app` → projeto → serviço **Postgres**
+2. Aba **Database** → clica em **"Query"**
+3. Cola o SQL e executa
+
+Exemplos:
+```sql
+-- Nova coluna
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS novo_campo VARCHAR(100);
+
+-- Nova tabela
+CREATE TABLE IF NOT EXISTS nova_tabela (...);
+
+-- Novo valor em enum
+ALTER TYPE workflowstep ADD VALUE IF NOT EXISTS 'novo_step' AFTER 'anterior';
+```
+
+> **Sempre usar `IF NOT EXISTS`** para evitar erro se rodar duas vezes.
+> `create_all()` do SQLAlchemy **NÃO altera tabelas existentes** — sempre usar ALTER TABLE manual.
+
+### URL de produção
+`https://imverp-production.up.railway.app`
+
+### Backup automático
+- GitHub Actions roda todo dia às 02h00 BRT
+- Destino: Google Drive → pasta `Backups/IMVERP/`
+- Retenção: 30 dias
+- Workflow: `.github/workflows/backup.yml`
+
+### Plano de contingência (Railway fora do ar)
+```bash
+cd "/home/lucas/Documentos/lusca (2)/Pessoal/IMV/backend"
+
+# 1. Limpar banco local
+PGPASSWORD=imv_senha_2024 psql -U imv_user -h localhost -d imv_erp -c \
+"TRUNCATE TABLE notas_clientes, logs_atividade, comissao_lancamentos, clientes, \
+empreendimentos, construtoras, analistas, corretores, unidades, usuarios \
+RESTART IDENTITY CASCADE;"
+
+# 2. Restaurar backup (baixar do Google Drive o arquivo mais recente)
+gunzip -c imverp_backup_YYYY-MM-DD.sql.gz | \
+PGPASSWORD=imv_senha_2024 psql -U imv_user -h localhost -d imv_erp
+
+# 3. Subir local
+source venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
 
 ## Pacotes Principais
 
