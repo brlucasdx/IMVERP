@@ -2830,6 +2830,14 @@ function showToast(msg, type) {
 const API_BASE = "/api";
 const fmtR = v => v != null ? `R$ ${Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}` : "—";
 
+// Converte string de timestamp do banco (sem fuso) para Date corretamente (UTC→local)
+function parseTS(s) {
+  if (!s) return null;
+  // Adiciona Z se não tiver info de fuso, forçando interpretação como UTC
+  if (!s.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(s)) s = s + 'Z';
+  return new Date(s);
+}
+
 // ── Relógio ao vivo ───────────────────────────────────────────────
 function _updateClock() {
   const el = document.getElementById("topbar-clock");
@@ -3831,7 +3839,7 @@ function renderBase(data) {
   }
   tbody.innerHTML = data.map(c => {
     const isJdF = c.empreendimento?.nome === "Jardim das Flores";
-    const arquivadoEm = c.arquivado_em ? new Date(c.arquivado_em).toLocaleDateString("pt-BR") : "—";
+    const arquivadoEm = c.arquivado_em ? parseTS(c.arquivado_em).toLocaleDateString("pt-BR") : "—";
     return `
       <tr style="cursor:pointer;background:#f0fdf4" onclick="verCliente(${c.id})" title="Ver detalhes">
         <td>${c.num_ordem} <span style="font-size:10px">🏆</span></td>
@@ -3923,7 +3931,7 @@ async function _carregarPdfsEdit(clienteId) {
     if (!pdfs.length) { lista.innerHTML = ""; return; }
     lista.innerHTML = pdfs.map(p => {
       const kb = p.tamanho ? (p.tamanho / 1024).toFixed(1) + " KB" : "";
-      const dt = new Date(p.created_at).toLocaleDateString("pt-BR");
+      const dt = parseTS(p.created_at).toLocaleDateString("pt-BR");
       return `<div id="epdf-${p.id}" style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:4px">
         <span style="font-size:16px">📄</span>
         <div style="flex:1;min-width:0">
@@ -5238,7 +5246,7 @@ async function loadLogs(reset = true) {
     // agrupa por data para separadores visuais
     let lastDate = "";
     const linhas = rows.map(l => {
-      const dt    = new Date(l.created_at);
+      const dt    = parseTS(l.created_at);
       const dia   = dt.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short', year:'numeric'});
       const hora  = dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
       const cor   = _ACAO_COR[l.acao]   || '#94a3b8';
@@ -5317,7 +5325,7 @@ async function loadLixeira() {
       return;
     }
     lista.innerHTML = data.map(c => {
-      const deletedAt = c.deleted_at ? new Date(c.deleted_at).toLocaleString("pt-BR") : "—";
+      const deletedAt = c.deleted_at ? parseTS(c.deleted_at).toLocaleString("pt-BR") : "—";
       const emp = c.empreendimento?.nome || "—";
       return `
         <div style="display:flex;align-items:center;gap:16px;padding:14px 16px;border:1px solid #fee2e2;border-radius:10px;background:#fff5f5">
@@ -5610,7 +5618,7 @@ async function _carregarPdfsDetalhe(clienteId) {
     }
     lista.innerHTML = pdfs.map(p => {
       const kb = p.tamanho ? (p.tamanho / 1024).toFixed(1) + " KB" : "";
-      const dt = new Date(p.created_at).toLocaleDateString("pt-BR");
+      const dt = parseTS(p.created_at).toLocaleDateString("pt-BR");
       return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;margin-bottom:4px">
         <span style="font-size:18px">📄</span>
         <div style="flex:1;min-width:0">
@@ -5684,7 +5692,7 @@ function renderDetNotas(notas) {
   const lista = notas.length
     ? notas.map(n => {
         const initials = (n.usuario?.nome || "?").split(" ").slice(0,2).map(w=>w[0].toUpperCase()).join("");
-        const ts = new Date(n.created_at).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+        const ts = parseTS(n.created_at).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
         const podeDel = _currentUser?.tipo === "admin";
         return `
           <div class="nota-item" id="nota-item-${n.id}">
@@ -5739,7 +5747,7 @@ async function _carregarNotasEdit(clienteId) {
     }
     lista.innerHTML = notas.map(n => {
       const initials = (n.usuario?.nome || "?").split(" ").slice(0,2).map(w=>w[0].toUpperCase()).join("");
-      const ts = new Date(n.created_at).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+      const ts = parseTS(n.created_at).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
       const podeDel = _currentUser?.tipo === "admin";
       return `<div class="nota-item" id="enota-${n.id}" style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">
         <div class="nota-avatar" style="width:24px;height:24px;font-size:10px;flex-shrink:0">${initials}</div>
@@ -5833,7 +5841,7 @@ async function loadDetLogs() {
     const items = logs.map(l => {
       const icon = _LOG_ICONS[l.acao] || "•";
       const label = _LOG_LABEL[l.acao] || l.acao;
-      const ts = new Date(l.created_at).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+      const ts = parseTS(l.created_at).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
       return `
         <div class="log-item">
           <div class="log-icon">${icon}</div>
@@ -6075,7 +6083,7 @@ async function loadUsuarios() {
       const isSelf = _currentUser && _currentUser.id === u.id;
       const initials = u.nome.trim().split(/\s+/).map(p => p[0]).join("").toUpperCase().slice(0,2);
       const criadoEm = u.created_at
-        ? new Date(u.created_at).toLocaleDateString("pt-BR", {day:"2-digit",month:"short",year:"numeric"})
+        ? parseTS(u.created_at).toLocaleDateString("pt-BR", {day:"2-digit",month:"short",year:"numeric"})
         : "–";
       const roleLabel = u.tipo === "admin" ? "🛡️ Admin" : "🖥️ Operador";
       const nomeEsc = u.nome.replace(/'/g,"\\'");
