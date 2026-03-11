@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user
+from app.auth import get_current_user, require_admin
 from app.database import get_db, settings
 from app.models import Cliente, ClientePdf, DocStatus, Empreendimento, LogAtividade, Nota, Usuario, WorkflowStep
 from app.schemas import ClienteCreate, ClienteOut, ClienteUpdate, ClientePdfOut, LogOut, NotaCreate, NotaOut
@@ -116,7 +116,7 @@ def criar_cliente(
 
 # ── Lixeira (ADM) ────────────────────────────────────────────────
 @router.get("/lixeira", response_model=list[ClienteOut])
-def lixeira(db: Session = Depends(get_db)):
+def lixeira(db: Session = Depends(get_db), _: Usuario = Depends(require_admin)):
     return (
         db.query(Cliente)
         .filter(Cliente.ativo == False)
@@ -171,7 +171,11 @@ def desarquivar_cliente(
 
 # ── Restaurar (ADM) ───────────────────────────────────────────────
 @router.post("/{cliente_id}/restaurar", response_model=ClienteOut)
-def restaurar_cliente(cliente_id: int, db: Session = Depends(get_db)):
+def restaurar_cliente(
+    cliente_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_admin),
+):
     cliente = db.get(Cliente, cliente_id)
     if not cliente:
         raise HTTPException(404, "Cliente não encontrado")
@@ -179,6 +183,9 @@ def restaurar_cliente(cliente_id: int, db: Session = Depends(get_db)):
         raise HTTPException(400, "Cliente já está ativo")
     cliente.ativo = True
     cliente.deleted_at = None
+    _log(db, cliente_id, "restaurado",
+         f"Processo restaurado da lixeira por {current_user.nome}",
+         current_user.id)
     db.commit()
     db.refresh(cliente)
     return cliente
@@ -303,7 +310,7 @@ async def upload_pdf(
 
     data = await arquivo.read()
     if len(data) > MAX_PDF_SIZE:
-        raise HTTPException(400, "Arquivo muito grande — máximo 10 MB")
+        raise HTTPException(400, "Arquivo muito grande — máximo 5 MB")
 
     pdf = ClientePdf(
         cliente_id=cliente_id,
@@ -345,10 +352,11 @@ def download_pdf(
     pdf = db.get(ClientePdf, pdf_id)
     if not pdf:
         raise HTTPException(404, "PDF não encontrado")
+    safe_name = "".join(c if c.isalnum() or c in "._- " else "_" for c in pdf.filename)
     return Response(
         content=pdf.data,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'inline; filename="{pdf.filename}"'},
+        headers={"Content-Disposition": f'inline; filename="{safe_name}"'},
     )
 
 

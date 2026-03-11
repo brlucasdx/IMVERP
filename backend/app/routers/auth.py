@@ -1,4 +1,3 @@
-from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -30,7 +29,6 @@ class UsuarioOut(BaseModel):
     nome: str
     email: str
     tipo: str
-    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -62,7 +60,7 @@ class SenhaChange(BaseModel):
 
 # ── Endpoints públicos ────────────────────────────────────────────
 @router.post("/login", response_model=TokenOut)
-@limiter.limit("10/minute")
+@limiter.limit("5/minute")
 def login(request: Request, data: LoginIn, db: Session = Depends(get_db)):
     """Autenticação. Erro genérico para não revelar se email existe."""
     user = db.query(Usuario).filter(
