@@ -1138,7 +1138,7 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
   <div class="sidebar-section" data-role="admin">Sistema</div>
   <ul class="sidebar-menu" data-role="admin">
     <li><a onclick="nav('relatorios')"><span class="icon">📊</span> Relatórios</a></li>
-    <li><a onclick="nav('logs')"><span class="icon">📋</span> Logs do Sistema</a></li>
+    <li><a onclick="nav('logs')"><span class="icon">📋</span> Logs</a></li>
     <li><a onclick="nav('lixeira')"><span class="icon">🗑️</span> Lixeira <span class="sidebar-badge" id="lixeira-badge" style="display:none"></span></a></li>
     <li><a onclick="nav('configuracoes')"><span class="icon">⚙️</span> Configurações</a></li>
   </ul>
@@ -1823,40 +1823,47 @@ body.is-admin li[data-role="admin"] { display:list-item !important; }
       <div class="unidade-grid" id="unidade-grid"></div>
     </div>
 
-    <!-- ====== LOGS DO SISTEMA ====== -->
+    <!-- ====== LOGS ====== -->
     <div class="page" id="page-logs">
       <div class="page-header">
         <div>
-          <h2>📋 Logs do Sistema</h2>
-          <p>Histórico completo de todas as ações realizadas</p>
+          <h2>📋 Logs</h2>
+          <p>Histórico de atividades do sistema</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-outline" onclick="loadLogs()" style="display:flex;align-items:center;gap:6px">
+            🔄 Atualizar
+          </button>
         </div>
       </div>
+
       <!-- Filtros -->
-      <div class="section-card" style="padding:16px;margin-bottom:16px">
+      <div class="section-card" style="padding:14px 18px;margin-bottom:16px">
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-          <div style="flex:2;min-width:200px">
-            <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px">Buscar cliente ou detalhe</label>
-            <input class="form-input" id="logs-busca" placeholder="Nome do cliente, arquivo..." oninput="_logsDebounce()" style="margin:0">
+          <div style="flex:2;min-width:220px;position:relative">
+            <label style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Buscar</label>
+            <input class="form-input" id="logs-busca" placeholder="Nome do cliente, arquivo, detalhe..." oninput="_logsDebounce()" style="margin:0;padding-left:34px">
+            <span style="position:absolute;left:10px;bottom:9px;font-size:14px;pointer-events:none">🔍</span>
           </div>
-          <div style="flex:1;min-width:160px">
-            <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px">Tipo de ação</label>
+          <div style="flex:1;min-width:170px">
+            <label style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Tipo de ação</label>
             <select class="form-input" id="logs-acao" onchange="loadLogs()" style="margin:0">
               <option value="">Todas as ações</option>
             </select>
           </div>
-          <div style="flex:1;min-width:160px">
-            <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px">Usuário</label>
+          <div style="flex:1;min-width:170px">
+            <label style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Usuário</label>
             <select class="form-input" id="logs-usuario" onchange="loadLogs()" style="margin:0">
               <option value="">Todos os usuários</option>
             </select>
           </div>
-          <button class="btn btn-outline" onclick="loadLogs()" style="height:38px">🔄 Atualizar</button>
         </div>
       </div>
+
       <!-- Tabela -->
       <div class="section-card" style="padding:0;overflow:hidden">
         <div id="logs-tabela" style="overflow-x:auto"></div>
-        <div id="logs-paginacao" style="padding:12px 16px;display:flex;gap:8px;align-items:center;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted)"></div>
+        <div id="logs-paginacao" style="padding:10px 18px;display:flex;gap:8px;align-items:center;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted)"></div>
       </div>
     </div>
 
@@ -2472,7 +2479,7 @@ const PAGE_INFO = {
   comissoes:       ['Comissões','Calculadora de comissões · mês de referência'],
   chaves:          ['Liberar Chaves','Relatório semanal de assinaturas para construtor'],
   relatorios:      ['Relatórios','Exportação e análise de dados'],
-  logs:            ['Logs do Sistema','Histórico completo de todas as ações realizadas'],
+  logs:            ['Logs','Histórico de atividades do sistema'],
   configuracoes:   ['Configurações','Gestão de usuários e acessos — somente administradores'],
 };
 
@@ -5131,20 +5138,34 @@ async function excluirCliente(id, nome, btn) {
   }
 }
 
-// ── Logs do Sistema ───────────────────────────────────────────────
+// ── Logs ───────────────────────────────────────────────────────────
 const _ACAO_LABEL = {
   cliente_criado:    'Processo criado',
-  workflow_alterado: 'Workflow alterado',
+  workflow_alterado: 'Workflow',
   doc_recebido:      'Doc. recebido',
   chave_liberada:    'Chave liberada',
   arquivado:         'Arquivado',
   desarquivado:      'Desarquivado',
-  deletado:          'Movido p/ lixeira',
+  deletado:          'Lixeira',
   restaurado:        'Restaurado',
-  dados_atualizados: 'Dados atualizados',
-  nota_adicionada:   'Nota adicionada',
+  dados_atualizados: 'Dados alterados',
+  nota_adicionada:   'Nota',
   pdf_enviado:       'PDF enviado',
   pdf_excluido:      'PDF excluído',
+};
+const _ACAO_ICONE = {
+  cliente_criado:    '✨',
+  workflow_alterado: '🔄',
+  doc_recebido:      '📄',
+  chave_liberada:    '🔑',
+  arquivado:         '📦',
+  desarquivado:      '📤',
+  deletado:          '🗑️',
+  restaurado:        '♻️',
+  dados_atualizados: '✏️',
+  nota_adicionada:   '💬',
+  pdf_enviado:       '📎',
+  pdf_excluido:      '🗑️',
 };
 const _ACAO_COR = {
   cliente_criado:    '#0ea5e9',
@@ -5156,6 +5177,9 @@ const _ACAO_COR = {
   restaurado:        '#10b981',
   pdf_excluido:      '#ef4444',
   pdf_enviado:       '#0ea5e9',
+  doc_recebido:      '#10b981',
+  dados_atualizados: '#f59e0b',
+  nota_adicionada:   '#6366f1',
 };
 
 let _logsOffset = 0;
@@ -5179,7 +5203,7 @@ async function loadLogs(reset = true) {
     try {
       const acoes = await apiFetch("/logs/acoes");
       selAcao.innerHTML = `<option value="">Todas as ações</option>` +
-        acoes.map(a => `<option value="${a}">${_ACAO_LABEL[a] || a}</option>`).join("");
+        acoes.map(a => `<option value="${a}">${(_ACAO_ICONE[a]||'') + ' ' + (_ACAO_LABEL[a] || a)}</option>`).join("");
     } catch(_) {}
   }
   const selUser = document.getElementById("logs-usuario");
@@ -5191,59 +5215,84 @@ async function loadLogs(reset = true) {
     } catch(_) {}
   }
 
-  const busca   = document.getElementById("logs-busca")?.value || "";
-  const acao    = selAcao?.value || "";
+  const busca     = document.getElementById("logs-busca")?.value || "";
+  const acao      = selAcao?.value || "";
   const usuarioId = selUser?.value || "";
   let qs = `?limit=${_LOGS_LIMIT}&offset=${_logsOffset}`;
   if (busca)     qs += `&busca=${encodeURIComponent(busca)}`;
   if (acao)      qs += `&acao=${encodeURIComponent(acao)}`;
   if (usuarioId) qs += `&usuario_id=${usuarioId}`;
 
-  tabela.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-muted)">Carregando...</div>`;
+  tabela.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted);font-size:13px">Carregando...</div>`;
   try {
     const rows = await apiFetch(`/logs${qs}`);
     if (!rows.length) {
-      tabela.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-muted)">Nenhum log encontrado.</div>`;
+      tabela.innerHTML = `<div style="padding:48px;text-align:center">
+        <div style="font-size:36px;margin-bottom:10px">📋</div>
+        <div style="font-weight:600;color:var(--text)">Nenhum registro encontrado</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Tente ajustar os filtros</div>
+      </div>`;
       if (pag) pag.innerHTML = "";
       return;
     }
+
+    // agrupa por data para separadores visuais
+    let lastDate = "";
+    const linhas = rows.map(l => {
+      const dt    = new Date(l.created_at);
+      const dia   = dt.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short', year:'numeric'});
+      const hora  = dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      const cor   = _ACAO_COR[l.acao]   || '#94a3b8';
+      const icone = _ACAO_ICONE[l.acao] || '•';
+      const label = _ACAO_LABEL[l.acao] || l.acao;
+      const ini   = (l.usuario_nome || 'S')[0].toUpperCase();
+      const detalhes = l.detalhes || '';
+
+      let sep = "";
+      if (dia !== lastDate) {
+        lastDate = dia;
+        sep = `<tr><td colspan="5" style="padding:10px 18px 4px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;background:var(--bg);border-bottom:1px solid var(--border)">${dia}</td></tr>`;
+      }
+
+      return sep + `
+        <tr class="log-row" style="border-bottom:1px solid var(--border)">
+          <td style="padding:10px 18px;white-space:nowrap;font-size:11px;color:var(--text-muted);font-variant-numeric:tabular-nums">${hora}</td>
+          <td style="padding:10px 12px;white-space:nowrap">
+            <div style="display:flex;align-items:center;gap:7px">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${ini}</div>
+              <span style="font-size:12px;font-weight:600">${l.usuario_nome || 'Sistema'}</span>
+            </div>
+          </td>
+          <td style="padding:10px 12px;white-space:nowrap">
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;background:${cor}18;color:${cor};border:1px solid ${cor}30">
+              ${icone} ${label}
+            </span>
+          </td>
+          <td style="padding:10px 12px">
+            <a onclick="verCliente(${l.cliente_id})" style="color:var(--primary);cursor:pointer;font-size:12px;font-weight:600;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${l.cliente_nome}</a>
+          </td>
+          <td style="padding:10px 18px;font-size:12px;color:var(--text-muted);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${detalhes.replace(/"/g,'&quot;')}">${detalhes || '<span style="opacity:.4">—</span>'}</td>
+        </tr>`;
+    }).join("");
+
     tabela.innerHTML = `
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <table style="width:100%;border-collapse:collapse">
         <thead>
-          <tr style="background:var(--bg);font-size:11px;color:var(--text-muted);text-transform:uppercase;border-bottom:2px solid var(--border)">
-            <th style="padding:10px 14px;text-align:left;white-space:nowrap">Data / Hora</th>
-            <th style="padding:10px 14px;text-align:left">Usuário</th>
-            <th style="padding:10px 14px;text-align:left">Ação</th>
-            <th style="padding:10px 14px;text-align:left">Cliente</th>
-            <th style="padding:10px 14px;text-align:left">Detalhes</th>
+          <tr style="background:var(--bg);border-bottom:2px solid var(--border)">
+            <th style="padding:10px 18px;text-align:left;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Hora</th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Usuário</th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Ação</th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Cliente</th>
+            <th style="padding:10px 18px;text-align:left;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Detalhes</th>
           </tr>
         </thead>
-        <tbody>
-          ${rows.map(l => {
-            const dt = new Date(l.created_at);
-            const dtStr = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-            const cor = _ACAO_COR[l.acao] || 'var(--text-muted)';
-            const label = _ACAO_LABEL[l.acao] || l.acao;
-            return `
-              <tr style="border-bottom:1px solid var(--border)" class="log-row">
-                <td style="padding:9px 14px;white-space:nowrap;color:var(--text-muted);font-family:monospace;font-size:11px">${dtStr}</td>
-                <td style="padding:9px 14px;font-weight:600;white-space:nowrap">${l.usuario_nome || 'Sistema'}</td>
-                <td style="padding:9px 14px;white-space:nowrap">
-                  <span style="font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600;background:${cor}18;color:${cor}">${label}</span>
-                </td>
-                <td style="padding:9px 14px">
-                  <a onclick="verCliente(${l.cliente_id})" style="color:var(--primary);cursor:pointer;font-weight:600">${l.cliente_nome}</a>
-                </td>
-                <td style="padding:9px 14px;color:var(--text-muted);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(l.detalhes||'').replace(/"/g,'&quot;')}">${l.detalhes || '—'}</td>
-              </tr>`;
-          }).join("")}
-        </tbody>
+        <tbody>${linhas}</tbody>
       </table>`;
 
     if (pag) {
       const total = rows.length;
       pag.innerHTML = `
-        Exibindo ${_logsOffset + 1}–${_logsOffset + total} registros
+        <span>${_logsOffset + 1}–${_logsOffset + total} registros exibidos</span>
         <div style="display:flex;gap:6px;margin-left:auto">
           ${_logsOffset > 0 ? `<button class="btn btn-outline btn-sm" onclick="_logsOffset-=${_LOGS_LIMIT};loadLogs(false)">← Anterior</button>` : ''}
           ${total === _LOGS_LIMIT ? `<button class="btn btn-outline btn-sm" onclick="_logsOffset+=${_LOGS_LIMIT};loadLogs(false)">Próximo →</button>` : ''}
